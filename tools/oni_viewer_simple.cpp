@@ -76,8 +76,8 @@ template <typename PointType>
 class SimpleONIViewer
 {
 public:
-  typedef pcl::PointCloud<PointType> Cloud;
-  typedef typename Cloud::ConstPtr CloudConstPtr;
+  using Cloud = pcl::PointCloud<PointType>;
+  using CloudConstPtr = typename Cloud::ConstPtr;
 
   SimpleONIViewer(pcl::ONIGrabber& grabber)
     : viewer("PCL OpenNI Viewer")
@@ -122,7 +122,7 @@ public:
   {
     //pcl::Grabber* interface = new pcl::OpenNIGrabber(device_id_, pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz, pcl::OpenNIGrabber::OpenNI_VGA_30Hz);
 
-    boost::function<void (const CloudConstPtr&) > f = boost::bind (&SimpleONIViewer::cloud_cb_, this, _1);
+    std::function<void (const CloudConstPtr&) > f = [this] (const CloudConstPtr& cloud) { cloud_cb_ (cloud); };
 
     boost::signals2::connection c = grabber_.registerCallback (f);
 
@@ -150,9 +150,9 @@ public:
 void
 usage(char ** argv)
 {
-  cout << "usage: " << argv[0] << " <path-to-oni-file> [framerate]\n";
-  cout << argv[0] << " -h | --help : shows this help\n";
-  cout << argv[0] << " -xyz        : enable just XYZ data display\n";
+  std::cout << "usage: " << argv[0] << " <path-to-oni-file> [framerate]\n";
+  std::cout << argv[0] << " -h | --help : shows this help\n";
+  std::cout << argv[0] << " -xyz        : enable just XYZ data display\n";
   return;
 }
 
@@ -192,7 +192,7 @@ main(int argc, char ** argv)
   {
     grabber = new  pcl::ONIGrabber(arg, true, false);
     trigger.setInterval (1.0 / static_cast<double> (frame_rate));
-    trigger.registerCallback (boost::bind(&pcl::ONIGrabber::start, grabber));
+    trigger.registerCallback ([=] { grabber->start (); });
     trigger.start();
   }
   if (grabber->providesCallback<pcl::ONIGrabber::sig_cb_openni_point_cloud_rgb > () && !pcl::console::find_switch (argc, argv, "-xyz"))

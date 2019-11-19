@@ -67,23 +67,20 @@ namespace pcl
    */
   class PCL_EXPORTS EnsensoGrabber : public Grabber
   {
-      typedef std::pair<pcl::PCLImage, pcl::PCLImage> PairOfImages;
+      using PairOfImages = std::pair<pcl::PCLImage, pcl::PCLImage>;
 
     public:
       /** @cond */
-      typedef boost::shared_ptr<EnsensoGrabber> Ptr;
-      typedef boost::shared_ptr<const EnsensoGrabber> ConstPtr;
+      using Ptr = boost::shared_ptr<EnsensoGrabber>;
+      using ConstPtr = boost::shared_ptr<const EnsensoGrabber>;
 
       // Define callback signature typedefs
-      typedef void
-      (sig_cb_ensenso_point_cloud) (const pcl::PointCloud<pcl::PointXYZ>::Ptr &);
+      using sig_cb_ensenso_point_cloud = void(const pcl::PointCloud<pcl::PointXYZ>::Ptr&);
 
-      typedef void
-      (sig_cb_ensenso_images) (const boost::shared_ptr<PairOfImages> &);
+      using sig_cb_ensenso_images = void(const boost::shared_ptr<PairOfImages>&);
 
-      typedef void
-      (sig_cb_ensenso_point_cloud_images) (const pcl::PointCloud<pcl::PointXYZ>::Ptr &,
-                                           const boost::shared_ptr<PairOfImages> &);
+      using sig_cb_ensenso_point_cloud_images = void(const pcl::PointCloud<pcl::PointXYZ>::Ptr&,const boost::shared_ptr<PairOfImages>&);
+
      /** @endcond */
 
       /** @brief Constructor */
@@ -467,7 +464,7 @@ namespace pcl
        * @return PCL stamp
        * The Ensenso API returns the time elapsed from January 1st, 1601 (UTC); on Linux OS the reference time is January 1st, 1970 (UTC).
        * See [time-stamp page](http://www.ensenso.de/manual/index.html?json_types.htm) for more info about the time stamp conversion. */
-      pcl::uint64_t
+      std::uint64_t
       static
       getPCLStamp (const double ensenso_stamp);
 

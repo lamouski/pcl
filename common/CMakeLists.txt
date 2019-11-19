@@ -34,6 +34,7 @@ set(range_image_srcs
 set(srcs
   src/point_types.cpp
   src/pcl_base.cpp
+  src/PCLPointCloud2.cpp
   src/io.cpp
   src/common.cpp
   src/correspondence.cpp
@@ -75,6 +76,7 @@ set(incs
   include/pcl/PointIndices.h
   include/pcl/register_point_struct.h
   include/pcl/conversions.h
+  include/pcl/make_shared.h
 )
 
 set(common_incs

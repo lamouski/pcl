@@ -103,24 +103,24 @@ template <typename PointType>
 class OpenNISegmentTracking
 {
 public:
-  //typedef pcl::PointXYZRGBANormal RefPointType;
-  typedef pcl::PointXYZRGBA RefPointType;
-  //typedef pcl::PointXYZ RefPointType;
-  typedef ParticleXYZRPY ParticleT;
+  //using RefPointType = pcl::PointXYZRGBANormal;
+  using RefPointType = pcl::PointXYZRGBA;
+  //using RefPointType = pcl::PointXYZ;
+  using ParticleT = ParticleXYZRPY;
   
-  typedef pcl::PointCloud<PointType> Cloud;
-  typedef pcl::PointCloud<RefPointType> RefCloud;
-  typedef RefCloud::Ptr RefCloudPtr;
-  typedef RefCloud::ConstPtr RefCloudConstPtr;
-  typedef typename Cloud::Ptr CloudPtr;
-  typedef typename Cloud::ConstPtr CloudConstPtr;
-  //typedef KLDAdaptiveParticleFilterTracker<RefPointType, ParticleT> ParticleFilter;
-  //typedef KLDAdaptiveParticleFilterOMPTracker<RefPointType, ParticleT> ParticleFilter;
-  //typedef ParticleFilterOMPTracker<RefPointType, ParticleT> ParticleFilter;
-  typedef ParticleFilterTracker<RefPointType, ParticleT> ParticleFilter;
-  typedef ParticleFilter::CoherencePtr CoherencePtr;
-  typedef pcl::search::KdTree<PointType> KdTree;
-  typedef typename KdTree::Ptr KdTreePtr;
+  using Cloud = pcl::PointCloud<PointType>;
+  using RefCloud = pcl::PointCloud<RefPointType>;
+  using RefCloudPtr = RefCloud::Ptr;
+  using RefCloudConstPtr = RefCloud::ConstPtr;
+  using CloudPtr = typename Cloud::Ptr;
+  using CloudConstPtr = typename Cloud::ConstPtr;
+  //using ParticleFilter = KLDAdaptiveParticleFilterTracker<RefPointType, ParticleT>;
+  //using ParticleFilter = KLDAdaptiveParticleFilterOMPTracker<RefPointType, ParticleT>;
+  //using ParticleFilter = ParticleFilterOMPTracker<RefPointType, ParticleT>;
+  using ParticleFilter = ParticleFilterTracker<RefPointType, ParticleT>;
+  using CoherencePtr = ParticleFilter::CoherencePtr;
+  using KdTree = pcl::search::KdTree<PointType>;
+  using KdTreePtr = typename KdTree::Ptr;
   OpenNISegmentTracking (const std::string& device_id, int thread_nr, double downsampling_grid_size,
                          bool use_convex_hull,
                          bool visualize_non_downsample, bool visualize_particles,
@@ -220,11 +220,8 @@ public:
       }
       return true;
     }
-    else
-    {
-      PCL_WARN ("no particles\n");
-      return false;
-    }
+    PCL_WARN ("no particles\n");
+    return false;
   }
   
   void
@@ -440,7 +437,7 @@ public:
     result.width = cloud->width;
     result.height = cloud->height;
     result.is_dense = cloud->is_dense;
-    for (size_t i = 0; i < cloud->points.size (); i++)
+    for (std::size_t i = 0; i < cloud->points.size (); i++)
     {
       RefPointType point;
       point.x = cloud->points[i].x;
@@ -476,19 +473,19 @@ public:
   void removeZeroPoints (const CloudConstPtr &cloud,
                          Cloud &result)
   {
-    for (size_t i = 0; i < cloud->points.size (); i++)
+    for (std::size_t i = 0; i < cloud->points.size (); i++)
     {
       PointType point = cloud->points[i];
-      if (!(fabs(point.x) < 0.01 &&
-            fabs(point.y) < 0.01 &&
-            fabs(point.z) < 0.01) &&
+      if (!(std::abs(point.x) < 0.01 &&
+            std::abs(point.y) < 0.01 &&
+            std::abs(point.z) < 0.01) &&
           !std::isnan(point.x) &&
           !std::isnan(point.y) &&
           !std::isnan(point.z))
         result.points.push_back(point);
     }
 
-    result.width = static_cast<pcl::uint32_t> (result.points.size ());
+    result.width = static_cast<std::uint32_t> (result.points.size ());
     result.height = 1;
     result.is_dense = true;
   }
@@ -504,7 +501,7 @@ public:
       PointType point = cloud->points[index];
       result.points.push_back (point);
     }
-    result.width = pcl::uint32_t (result.points.size ());
+    result.width = std::uint32_t (result.points.size ());
     result.height = 1;
     result.is_dense = true;
   }
@@ -569,7 +566,7 @@ public:
           pcl::compute3DCentroid<RefPointType> (*temp_cloud, c);
           int segment_index = 0;
           double segment_distance = c[0] * c[0] + c[1] * c[1];
-          for (size_t i = 1; i < cluster_indices.size (); i++)
+          for (std::size_t i = 1; i < cluster_indices.size (); i++)
           {
             temp_cloud.reset (new Cloud);
             extractSegmentCluster (target_cloud, cluster_indices, int (i), *temp_cloud);
@@ -638,11 +635,11 @@ public:
   run ()
   {
     pcl::Grabber* interface = new pcl::OpenNIGrabber (device_id_);
-    boost::function<void (const CloudConstPtr&)> f =
-      boost::bind (&OpenNISegmentTracking::cloud_cb, this, _1);
+    std::function<void (const CloudConstPtr&)> f =
+      [this] (const CloudConstPtr& cloud) { cloud_cb (cloud); };
     interface->registerCallback (f);
-    
-    viewer_.runOnVisualizationThread (boost::bind(&OpenNISegmentTracking::viz_cb, this, _1), "viz_cb");
+
+    viewer_.runOnVisualizationThread ([this] (pcl::visualization::PCLVisualizer& viz) { viz_cb (viz); }, "viz_cb");
     
     interface->start ();
       

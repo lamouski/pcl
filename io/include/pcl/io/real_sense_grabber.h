@@ -42,6 +42,7 @@
 #include <pcl/point_types.h>
 #include <pcl/common/time.h>
 
+#include <memory>
 #include <thread>
 
 namespace pcl
@@ -64,13 +65,10 @@ namespace pcl
 
     public:
 
-      typedef
-        void (sig_cb_real_sense_point_cloud)
-          (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr&);
+      using Ptr = boost::shared_ptr<RealSenseGrabber>;
 
-      typedef
-        void (sig_cb_real_sense_point_cloud_rgba)
-          (const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr&);
+      using sig_cb_real_sense_point_cloud = void(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr&);
+      using sig_cb_real_sense_point_cloud_rgba = void(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr&);
 
       /** A descriptor for capturing mode.
         *
@@ -175,7 +173,7 @@ namespace pcl
         * \note if the grabber is running and the new parameters are different
         * from the current parameters, grabber will be restarted. */
       void
-      enableTemporalFiltering (TemporalFilteringType type, size_t window_size);
+      enableTemporalFiltering (TemporalFilteringType type, std::size_t window_size);
 
       /** Disable temporal filtering. */
       void
@@ -235,13 +233,13 @@ namespace pcl
       boost::signals2::signal<sig_cb_real_sense_point_cloud>* point_cloud_signal_;
       boost::signals2::signal<sig_cb_real_sense_point_cloud_rgba>* point_cloud_rgba_signal_;
 
-      boost::shared_ptr<pcl::io::real_sense::RealSenseDevice> device_;
+      std::shared_ptr<pcl::io::real_sense::RealSenseDevice> device_;
 
       bool is_running_;
       unsigned int confidence_threshold_;
 
       TemporalFilteringType temporal_filtering_type_;
-      size_t temporal_filtering_window_size_;
+      std::size_t temporal_filtering_window_size_;
 
       /// Capture mode requested by the user at construction time
       Mode mode_requested_;
@@ -268,7 +266,7 @@ namespace pcl
       std::thread thread_;
 
       /// Depth buffer to perform temporal filtering of the depth images
-      boost::shared_ptr<pcl::io::Buffer<unsigned short> > depth_buffer_;
+      std::shared_ptr<pcl::io::Buffer<unsigned short> > depth_buffer_;
 
   };
 

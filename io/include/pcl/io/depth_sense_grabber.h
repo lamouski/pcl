@@ -58,13 +58,10 @@ namespace pcl
 
     public:
 
-      typedef
-        void (sig_cb_depth_sense_point_cloud)
-          (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr&);
+      using Ptr = boost::shared_ptr<DepthSenseGrabber>;
 
-      typedef
-        void (sig_cb_depth_sense_point_cloud_rgba)
-          (const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr&);
+      using sig_cb_depth_sense_point_cloud = void(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr&);
+      using sig_cb_depth_sense_point_cloud_rgba = void(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr&);
 
       enum Mode
       {
@@ -131,7 +128,7 @@ namespace pcl
         * The window size parameter is not relevant for `DepthSense_None`
         * filtering type. */
       void
-      enableTemporalFiltering (TemporalFilteringType type, size_t window_size = 1);
+      enableTemporalFiltering (TemporalFilteringType type, std::size_t window_size = 1);
 
       /** Disable temporal filtering. */
       void

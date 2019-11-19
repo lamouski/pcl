@@ -16,21 +16,21 @@ namespace pcl
     Vertices ()
     {}
 
-    std::vector<uint32_t> vertices;
+    std::vector<std::uint32_t> vertices;
 
   public:
-    typedef boost::shared_ptr<Vertices> Ptr;
-    typedef boost::shared_ptr<Vertices const> ConstPtr;
+    using Ptr = boost::shared_ptr<Vertices>;
+    using ConstPtr = boost::shared_ptr<const Vertices>;
   }; // struct Vertices
 
 
-  typedef boost::shared_ptr<Vertices> VerticesPtr;
-  typedef boost::shared_ptr<Vertices const> VerticesConstPtr;
+  using VerticesPtr = boost::shared_ptr<Vertices>;
+  using VerticesConstPtr = boost::shared_ptr<const Vertices>;
 
   inline std::ostream& operator<<(std::ostream& s, const  ::pcl::Vertices & v)
   {
     s << "vertices[]" << std::endl;
-    for (size_t i = 0; i < v.vertices.size (); ++i)
+    for (std::size_t i = 0; i < v.vertices.size (); ++i)
     {
       s << "  vertices[" << i << "]: ";
       s << "  " << v.vertices[i] << std::endl;

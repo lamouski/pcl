@@ -40,7 +40,7 @@
 std::condition_variable OutofcoreCloud::pcd_queue_ready;
 std::mutex OutofcoreCloud::pcd_queue_mutex;
 
-boost::shared_ptr<std::thread> OutofcoreCloud::pcd_reader_thread;
+std::shared_ptr<std::thread> OutofcoreCloud::pcd_reader_thread;
 //MonitorQueue<std::string> OutofcoreCloud::pcd_queue;
 
 //std::map<std::string, vtkSmartPointer<vtkPolyData> > OutofcoreCloud::cloud_data_cache;
@@ -54,7 +54,7 @@ OutofcoreCloud::pcdReaderThread ()
 {
 
   std::string pcd_file;
-  size_t timestamp = 0;
+  std::size_t timestamp = 0;
 
   while (true)
   {
@@ -115,12 +115,8 @@ OutofcoreCloud::OutofcoreCloud (std::string name, boost::filesystem::path& tree_
 {
 
   // Create the pcd reader thread once for all outofcore nodes
-  if (OutofcoreCloud::pcd_reader_thread.get() == nullptr)
-  {
-//    OutofcoreCloud::pcd_reader_thread = boost::shared_ptr<std::thread>(new std::thread(&OutofcoreCloud::pcdReaderThread, this));
-    OutofcoreCloud::pcd_reader_thread = boost::shared_ptr<std::thread>(new std::thread(&OutofcoreCloud::pcdReaderThread));
-  }
-
+  if (!OutofcoreCloud::pcd_reader_thread)
+    OutofcoreCloud::pcd_reader_thread.reset (new std::thread (&OutofcoreCloud::pcdReaderThread));
 
   octree_.reset (new OctreeDisk (tree_root, true));
   octree_->getBoundingBox (bbox_min_, bbox_max_);
@@ -217,7 +213,7 @@ OutofcoreCloud::render (vtkRenderer* renderer)
 
 //      for (int i=0; i < node->getDepth(); i++)
 //        std::cout << " ";
-//      std::cout << coverage << "-" << pcd_file << endl;//" : " << (coverage > (size[0] * size[1])) << endl;
+//      std::cout << coverage << "-" << pcd_file << std::endl;//" : " << (coverage > (size[0] * size[1])) << std::endl;
 
       std::string pcd_file = node->getPCDFilename ().string ();
 
@@ -308,7 +304,7 @@ OutofcoreCloud::render (vtkRenderer* renderer)
       }
     }
 
-    for (size_t i = 0; i < actors_to_remove.size (); i++)
+    for (std::size_t i = 0; i < actors_to_remove.size (); i++)
     {
       points_loaded_ -= actors_to_remove.back ()->GetMapper ()->GetInput ()->GetNumberOfPoints ();
       data_loaded_ -= actors_to_remove.back ()->GetMapper ()->GetInput ()->GetActualMemorySize();

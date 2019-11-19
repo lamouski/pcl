@@ -83,8 +83,11 @@ namespace pcl
 
         // Create the local callback function and bind it to the local function responsible for updating
         // the local buffers
-        update_visualizer_ = boost::bind (&RegistrationVisualizer<PointSource, PointTarget>::updateIntermediateCloud,
-                                          this, _1, _2, _3, _4);
+        update_visualizer_ = [this] (const pcl::PointCloud<PointSource>& cloud_src, const std::vector<int>& indices_src,
+                                     const pcl::PointCloud<PointTarget>& cloud_tgt, const std::vector<int>& indices_tgt)
+        {
+          updateIntermediateCloud (cloud_src, indices_src, cloud_tgt, indices_tgt);
+        };
 
         // Register the local callback function to the registration algorithm callback function
         registration.registerVisualizationCallback (this->update_visualizer_);
@@ -139,7 +142,7 @@ namespace pcl
       }
 
       /** \brief Return maximum number of correspondence lines which are rendered. */
-      inline size_t
+      inline std::size_t
       getMaximumDisplayedCorrespondences()
       {
         return maximum_displayed_correspondences_;
@@ -152,7 +155,7 @@ namespace pcl
 
       /** \brief Return the string obtained by concatenating a root_name and an id */
       inline std::string
-      getIndexedName (std::string &root_name, size_t &id)
+      getIndexedName (std::string &root_name, std::size_t &id)
       {
         std::stringstream id_stream_;
         id_stream_ << id;
@@ -170,7 +173,7 @@ namespace pcl
       std::string registration_method_name_;
 
       /** \brief Callback function linked to pcl::Registration::update_visualizer_ */
-      boost::function<void
+      std::function<void
       (const pcl::PointCloud<PointSource> &cloud_src, const std::vector<int> &indices_src, const pcl::PointCloud<
           PointTarget> &cloud_tgt, const std::vector<int> &indices_tgt)> update_visualizer_;
 
@@ -196,7 +199,7 @@ namespace pcl
       std::vector<int> cloud_target_indices_;
 
       /** \brief The maximum number of displayed correspondences. */
-      size_t maximum_displayed_correspondences_;
+      std::size_t maximum_displayed_correspondences_;
 
     };
 }

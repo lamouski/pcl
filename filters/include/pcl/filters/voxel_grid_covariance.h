@@ -76,15 +76,15 @@ namespace pcl
       using VoxelGrid<PointT>::divb_mul_;
 
 
-      typedef typename pcl::traits::fieldList<PointT>::type FieldList;
-      typedef typename Filter<PointT>::PointCloud PointCloud;
-      typedef typename PointCloud::Ptr PointCloudPtr;
-      typedef typename PointCloud::ConstPtr PointCloudConstPtr;
+      using FieldList = typename pcl::traits::fieldList<PointT>::type;
+      using PointCloud = typename Filter<PointT>::PointCloud;
+      using PointCloudPtr = typename PointCloud::Ptr;
+      using PointCloudConstPtr = typename PointCloud::ConstPtr;
 
     public:
 
-      typedef boost::shared_ptr< VoxelGrid<PointT> > Ptr;
-      typedef boost::shared_ptr< const VoxelGrid<PointT> > ConstPtr;
+      using Ptr = boost::shared_ptr<VoxelGrid<PointT> >;
+      using ConstPtr = boost::shared_ptr<const VoxelGrid<PointT> >;
 
 
       /** \brief Simple structure to hold a centroid, covarince and the number of points in a leaf.
@@ -186,10 +186,10 @@ namespace pcl
       };
 
       /** \brief Pointer to VoxelGridCovariance leaf structure */
-      typedef Leaf* LeafPtr;
+      using LeafPtr = Leaf *;
 
       /** \brief Const pointer to VoxelGridCovariance leaf structure */
-      typedef const Leaf* LeafConstPtr;
+      using LeafConstPtr = const Leaf *;
 
     public:
 
@@ -299,14 +299,13 @@ namespace pcl
       inline LeafConstPtr
       getLeaf (int index)
       {
-        typename std::map<size_t, Leaf>::iterator leaf_iter = leaves_.find (index);
+        typename std::map<std::size_t, Leaf>::iterator leaf_iter = leaves_.find (index);
         if (leaf_iter != leaves_.end ())
         {
           LeafConstPtr ret (&(leaf_iter->second));
           return ret;
         }
-        else
-          return nullptr;
+        return nullptr;
       }
 
       /** \brief Get the voxel containing point p.
@@ -317,23 +316,22 @@ namespace pcl
       getLeaf (PointT &p)
       {
         // Generate index associated with p
-        int ijk0 = static_cast<int> (floor (p.x * inverse_leaf_size_[0]) - min_b_[0]);
-        int ijk1 = static_cast<int> (floor (p.y * inverse_leaf_size_[1]) - min_b_[1]);
-        int ijk2 = static_cast<int> (floor (p.z * inverse_leaf_size_[2]) - min_b_[2]);
+        int ijk0 = static_cast<int> (std::floor (p.x * inverse_leaf_size_[0]) - min_b_[0]);
+        int ijk1 = static_cast<int> (std::floor (p.y * inverse_leaf_size_[1]) - min_b_[1]);
+        int ijk2 = static_cast<int> (std::floor (p.z * inverse_leaf_size_[2]) - min_b_[2]);
 
         // Compute the centroid leaf index
         int idx = ijk0 * divb_mul_[0] + ijk1 * divb_mul_[1] + ijk2 * divb_mul_[2];
 
         // Find leaf associated with index
-        typename std::map<size_t, Leaf>::iterator leaf_iter = leaves_.find (idx);
+        typename std::map<std::size_t, Leaf>::iterator leaf_iter = leaves_.find (idx);
         if (leaf_iter != leaves_.end ())
         {
           // If such a leaf exists return the pointer to the leaf structure
           LeafConstPtr ret (&(leaf_iter->second));
           return ret;
         }
-        else
-          return nullptr;
+        return nullptr;
       }
 
       /** \brief Get the voxel containing point p.
@@ -344,23 +342,22 @@ namespace pcl
       getLeaf (Eigen::Vector3f &p)
       {
         // Generate index associated with p
-        int ijk0 = static_cast<int> (floor (p[0] * inverse_leaf_size_[0]) - min_b_[0]);
-        int ijk1 = static_cast<int> (floor (p[1] * inverse_leaf_size_[1]) - min_b_[1]);
-        int ijk2 = static_cast<int> (floor (p[2] * inverse_leaf_size_[2]) - min_b_[2]);
+        int ijk0 = static_cast<int> (std::floor (p[0] * inverse_leaf_size_[0]) - min_b_[0]);
+        int ijk1 = static_cast<int> (std::floor (p[1] * inverse_leaf_size_[1]) - min_b_[1]);
+        int ijk2 = static_cast<int> (std::floor (p[2] * inverse_leaf_size_[2]) - min_b_[2]);
 
         // Compute the centroid leaf index
         int idx = ijk0 * divb_mul_[0] + ijk1 * divb_mul_[1] + ijk2 * divb_mul_[2];
 
         // Find leaf associated with index
-        typename std::map<size_t, Leaf>::iterator leaf_iter = leaves_.find (idx);
+        typename std::map<std::size_t, Leaf>::iterator leaf_iter = leaves_.find (idx);
         if (leaf_iter != leaves_.end ())
         {
           // If such a leaf exists return the pointer to the leaf structure
           LeafConstPtr ret (&(leaf_iter->second));
           return ret;
         }
-        else
-          return nullptr;
+        return nullptr;
 
       }
 
@@ -376,7 +373,7 @@ namespace pcl
       /** \brief Get the leaf structure map
        * \return a map contataining all leaves
        */
-      inline const std::map<size_t, Leaf>&
+      inline const std::map<std::size_t, Leaf>&
       getLeaves ()
       {
         return leaves_;
@@ -524,7 +521,7 @@ namespace pcl
       double min_covar_eigvalue_mult_;
 
       /** \brief Voxel structure containing all leaf nodes (includes voxels with less than a sufficient number of points). */
-      std::map<size_t, Leaf> leaves_;
+      std::map<std::size_t, Leaf> leaves_;
 
       /** \brief Point cloud containing centroids of voxels containing atleast minimum number of points. */
       PointCloudPtr voxel_centroids_;

@@ -68,7 +68,7 @@ using namespace pcl;
 using namespace std;
 using namespace std::chrono_literals;
 
-typedef PointXYZRGBA PointT;
+using PointT = PointXYZRGBA;
 
 #define SHOW_FPS 1
 
@@ -76,9 +76,9 @@ typedef PointXYZRGBA PointT;
 class NILinemod
 {
   public:
-    typedef PointCloud<PointT> Cloud;
-    typedef Cloud::Ptr CloudPtr;
-    typedef Cloud::ConstPtr CloudConstPtr;
+    using Cloud = PointCloud<PointT>;
+    using CloudPtr = Cloud::Ptr;
+    using CloudConstPtr = Cloud::ConstPtr;
     bool added;
 
     NILinemod (Grabber& grabber)
@@ -154,16 +154,13 @@ class NILinemod
           first_frame_ = true;
           return;
         }
-        else
-        {
-          plane_.reset (new Cloud);
+        plane_.reset (new Cloud);
 
-          // Compute the convex hull of the plane
-          ConvexHull<PointT> chull;
-          chull.setDimension (2);
-          chull.setInputCloud (plane_inliers);
-          chull.reconstruct (*plane_);
-        }
+        // Compute the convex hull of the plane
+        ConvexHull<PointT> chull;
+        chull.setDimension (2);
+        chull.setInputCloud (plane_inliers);
+        chull.reconstruct (*plane_);
       }
     }
 
@@ -183,13 +180,13 @@ class NILinemod
     keyboard_callback (const visualization::KeyboardEvent&, void*)
     {
       //if (event.getKeyCode())
-      //  cout << "the key \'" << event.getKeyCode() << "\' (" << event.getKeyCode() << ") was";
+      //  std::cout << "the key \'" << event.getKeyCode() << "\' (" << event.getKeyCode() << ") was";
       //else
-      //  cout << "the special key \'" << event.getKeySym() << "\' was";
+      //  std::cout << "the special key \'" << event.getKeySym() << "\' was";
       //if (event.keyDown())
-      //  cout << " pressed" << endl;
+      //  std::cout << " pressed" << std::endl;
       //else
-      //  cout << " released" << endl;
+      //  std::cout << " released" << std::endl;
     }
     
     /////////////////////////////////////////////////////////////////////////
@@ -198,7 +195,7 @@ class NILinemod
     {
       //if (mouse_event.getType() == visualization::MouseEvent::MouseButtonPress && mouse_event.getButton() == visualization::MouseEvent::LeftButton)
       //{
-      //  cout << "left button pressed @ " << mouse_event.getX () << " , " << mouse_event.getY () << endl;
+      //  std::cout << "left button pressed @ " << mouse_event.getX () << " , " << mouse_event.getY () << std::endl;
       //}
     }
 
@@ -267,7 +264,7 @@ class NILinemod
       euclidean_segmentation.setInputCloud (cloud);
 
       PointCloud<Label> euclidean_labels;
-      vector<PointIndices> euclidean_label_indices;
+      std::vector<PointIndices> euclidean_label_indices;
       euclidean_segmentation.segment (euclidean_labels, euclidean_label_indices);
 
       // For each cluster found
@@ -277,7 +274,7 @@ class NILinemod
         if (cluster_found)
           break;
         // Check if the point that we picked belongs to it
-        for (size_t j = 0; j < euclidean_label_index.indices.size (); ++j)
+        for (std::size_t j = 0; j < euclidean_label_index.indices.size (); ++j)
         {
           if (picked_idx != euclidean_label_index.indices[j])
             continue;
@@ -316,19 +313,19 @@ class NILinemod
       mps_.setInputCloud (search_.getInputCloud ());
 
       // Use one of the overloaded segmentAndRefine calls to get all the information that we want out
-      vector<PlanarRegion<PointT>, Eigen::aligned_allocator<PlanarRegion<PointT> > > regions;
-      vector<ModelCoefficients> model_coefficients;
-      vector<PointIndices> inlier_indices;  
+      std::vector<PlanarRegion<PointT>, Eigen::aligned_allocator<PlanarRegion<PointT> > > regions;
+      std::vector<ModelCoefficients> model_coefficients;
+      std::vector<PointIndices> inlier_indices;  
       PointCloud<Label>::Ptr labels (new PointCloud<Label>);
-      vector<PointIndices> label_indices;
-      vector<PointIndices> boundary_indices;
+      std::vector<PointIndices> label_indices;
+      std::vector<PointIndices> boundary_indices;
       mps_.segmentAndRefine (regions, model_coefficients, inlier_indices, labels, label_indices, boundary_indices);
       PCL_DEBUG ("Number of planar regions detected: %lu for a cloud of %lu points and %lu normals.\n", regions.size (), search_.getInputCloud ()->points.size (), normal_cloud->points.size ());
 
-      double max_dist = numeric_limits<double>::max ();
+      double max_dist = std::numeric_limits<double>::max ();
       // Compute the distances from all the planar regions to the picked point, and select the closest region
       int idx = -1;
-      for (size_t i = 0; i < regions.size (); ++i)
+      for (std::size_t i = 0; i < regions.size (); ++i)
       {
         double dist = pointToPlaneDistance (picked_point, regions[i].getCoefficients ()); 
         if (dist < max_dist)
@@ -373,8 +370,8 @@ class NILinemod
       if (idx == -1)
         return;
 
-      vector<int> indices (1);
-      vector<float> distances (1);
+      std::vector<int> indices (1);
+      std::vector<float> distances (1);
 
       // Use mutices to make sure we get the right cloud
       std::lock_guard<std::mutex> lock1 (cloud_mutex_);
@@ -396,7 +393,7 @@ class NILinemod
       search_.nearestKSearch (picked_pt, 1, indices, distances);
 
       // Get the [u, v] in pixel coordinates for the ImageViewer. Remember that 0,0 is bottom left.
-      uint32_t width  = search_.getInputCloud ()->width;
+      std::uint32_t width  = search_.getInputCloud ()->width;
 //               height = search_.getInputCloud ()->height;
       int v = indices[0] / width,
           u = indices[0] % width;
@@ -421,20 +418,17 @@ class NILinemod
         return;
       }
       // Else, draw it on screen
-      else
-      {
-        //cloud_viewer_.addPolygon (region, 1.0, 0.0, 0.0, "region");
-        //cloud_viewer_.setShapeRenderingProperties (visualization::PCL_VISUALIZER_LINE_WIDTH, 10, "region");
+      //cloud_viewer_.addPolygon (region, 1.0, 0.0, 0.0, "region");
+      //cloud_viewer_.setShapeRenderingProperties (visualization::PCL_VISUALIZER_LINE_WIDTH, 10, "region");
 
-        PlanarRegion<PointT> refined_region;
-        pcl::approximatePolygon (region, refined_region, 0.01, false, true);
-        PCL_INFO ("Planar region: %lu points initial, %lu points after refinement.\n", region.getContour ().size (), refined_region.getContour ().size ());
-        cloud_viewer_.addPolygon (refined_region, 0.0, 0.0, 1.0, "refined_region");
-        cloud_viewer_.setShapeRenderingProperties (visualization::PCL_VISUALIZER_LINE_WIDTH, 10, "refined_region");
+      PlanarRegion<PointT> refined_region;
+      pcl::approximatePolygon (region, refined_region, 0.01, false, true);
+      PCL_INFO ("Planar region: %lu points initial, %lu points after refinement.\n", region.getContour ().size (), refined_region.getContour ().size ());
+      cloud_viewer_.addPolygon (refined_region, 0.0, 0.0, 1.0, "refined_region");
+      cloud_viewer_.setShapeRenderingProperties (visualization::PCL_VISUALIZER_LINE_WIDTH, 10, "refined_region");
 
-        // Draw in image space
-        image_viewer_.addPlanarPolygon (search_.getInputCloud (), refined_region, 0.0, 0.0, 1.0, "refined_region", 1.0);
-      }
+      // Draw in image space
+      image_viewer_.addPlanarPolygon (search_.getInputCloud (), refined_region, 0.0, 0.0, 1.0, "refined_region", 1.0);
 
       // If no object could be determined, exit
       if (!object)
@@ -442,28 +436,25 @@ class NILinemod
         PCL_ERROR ("No object detected. Please select another point or relax the thresholds and continue.\n");
         return;
       }
-      else
-      {
-        // Visualize the object in 3D...
-        visualization::PointCloudColorHandlerCustom<PointT> red (object, 255, 0, 0);
-        if (!cloud_viewer_.updatePointCloud (object, red, "object"))
-          cloud_viewer_.addPointCloud (object, red, "object");
-        // ...and 2D
-        image_viewer_.removeLayer ("object");
-        image_viewer_.addMask (search_.getInputCloud (), *object, "object");
+      // Visualize the object in 3D...
+      visualization::PointCloudColorHandlerCustom<PointT> red (object, 255, 0, 0);
+      if (!cloud_viewer_.updatePointCloud (object, red, "object"))
+        cloud_viewer_.addPointCloud (object, red, "object");
+      // ...and 2D
+      image_viewer_.removeLayer ("object");
+      image_viewer_.addMask (search_.getInputCloud (), *object, "object");
 
-        // Compute the min/max of the object
-        PointT min_pt, max_pt;
-        getMinMax3D (*object, min_pt, max_pt);
-        stringstream ss;
-        ss << "cube_" << idx;
-        // Visualize the bounding box in 3D...
-        cloud_viewer_.addCube (min_pt.x, max_pt.x, min_pt.y, max_pt.y, min_pt.z, max_pt.z, 0.0, 1.0, 0.0, ss.str ());
-        cloud_viewer_.setShapeRenderingProperties (visualization::PCL_VISUALIZER_LINE_WIDTH, 10, ss.str ());
+      // Compute the min/max of the object
+      PointT min_pt, max_pt;
+      getMinMax3D (*object, min_pt, max_pt);
+      stringstream ss2;
+      ss2 << "cube_" << idx;
+      // Visualize the bounding box in 3D...
+      cloud_viewer_.addCube (min_pt.x, max_pt.x, min_pt.y, max_pt.y, min_pt.z, max_pt.z, 0.0, 1.0, 0.0, ss2.str ());
+      cloud_viewer_.setShapeRenderingProperties (visualization::PCL_VISUALIZER_LINE_WIDTH, 10, ss2.str ());
 
-        // ...and 2D
-        image_viewer_.addRectangle (search_.getInputCloud (), *object);
-      }
+      // ...and 2D
+      image_viewer_.addRectangle (search_.getInputCloud (), *object);
     }
     
     /////////////////////////////////////////////////////////////////////////
@@ -473,7 +464,7 @@ class NILinemod
       cloud_viewer_.registerMouseCallback (&NILinemod::mouse_callback, *this);
       cloud_viewer_.registerKeyboardCallback(&NILinemod::keyboard_callback, *this);
       cloud_viewer_.registerPointPickingCallback (&NILinemod::pp_callback, *this);
-      boost::function<void (const CloudConstPtr&) > cloud_cb = boost::bind (&NILinemod::cloud_callback, this, _1);
+      std::function<void (const CloudConstPtr&) > cloud_cb = [this] (const CloudConstPtr& cloud) { cloud_callback (cloud); };
       cloud_connection = grabber_.registerCallback (cloud_cb);
       
       image_viewer_.registerMouseCallback (&NILinemod::mouse_callback, *this);

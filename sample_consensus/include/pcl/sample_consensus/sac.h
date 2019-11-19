@@ -42,7 +42,9 @@
 
 #include <pcl/sample_consensus/boost.h>
 #include <pcl/sample_consensus/sac_model.h>
+
 #include <ctime>
+#include <memory>
 #include <set>
 
 namespace pcl
@@ -54,15 +56,15 @@ namespace pcl
   template <typename T>
   class SampleConsensus
   {
-    typedef typename SampleConsensusModel<T>::Ptr SampleConsensusModelPtr;
+    using SampleConsensusModelPtr = typename SampleConsensusModel<T>::Ptr;
 
     private:
       /** \brief Constructor for base SAC. */
       SampleConsensus () {};
 
     public:
-      typedef boost::shared_ptr<SampleConsensus> Ptr;
-      typedef boost::shared_ptr<const SampleConsensus> ConstPtr;
+      using Ptr = boost::shared_ptr<SampleConsensus<T> >;
+      using ConstPtr = boost::shared_ptr<const SampleConsensus<T> >;
 
       /** \brief Constructor for base SAC.
         * \param[in] model a Sample Consensus model
@@ -181,7 +183,7 @@ namespace pcl
         unsigned int refine_iterations = 0;
         bool inlier_changed = false, oscillating = false;
         std::vector<int> new_inliers, prev_inliers = inliers_;
-        std::vector<size_t> inliers_sizes;
+        std::vector<std::size_t> inliers_sizes;
         Eigen::VectorXf new_model_coefficients = model_coefficients_;
         do
         {
@@ -227,7 +229,7 @@ namespace pcl
           }
 
           // Check the values of the inlier set
-          for (size_t i = 0; i < prev_inliers.size (); ++i)
+          for (std::size_t i = 0; i < prev_inliers.size (); ++i)
           {
             // If the value of the inliers changed, then we are still optimizing
             if (prev_inliers[i] != new_inliers[i])
@@ -269,7 +271,7 @@ namespace pcl
         */
       inline void
       getRandomSamples (const boost::shared_ptr <std::vector<int> > &indices, 
-                        size_t nr_samples, 
+                        std::size_t nr_samples, 
                         std::set<int> &indices_subset)
       {
         indices_subset.clear ();
@@ -325,7 +327,7 @@ namespace pcl
       boost::mt19937 rng_alg_;
 
       /** \brief Boost-based random number generator distribution. */
-      boost::shared_ptr<boost::uniform_01<boost::mt19937> > rng_;
+      std::shared_ptr<boost::uniform_01<boost::mt19937> > rng_;
 
       /** \brief Boost-based random number generator. */
       inline double

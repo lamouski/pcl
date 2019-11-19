@@ -256,7 +256,7 @@ pcl::search::OrganizedNeighbor<PointT>::nearestKSearch (const PointT &query,
   
   k_indices.resize (results.size ());
   k_sqr_distances.resize (results.size ());
-  size_t idx = results.size () - 1;
+  std::size_t idx = results.size () - 1;
   while (!results.empty ())
   {
     k_indices [idx] = results.top ().index;
@@ -363,7 +363,7 @@ pcl::search::OrganizedNeighbor<PointT>::estimateProjectionMatrix ()
 
   double residual_sqr = pcl::estimateProjectionMatrix<PointT> (input_, projection_matrix_, indices);
   
-  if (fabs (residual_sqr) > eps_ * float (indices.size ()))
+  if (std::abs (residual_sqr) > eps_ * float (indices.size ()))
   {
     PCL_ERROR ("[pcl::%s::radiusSearch] Input dataset is not from a projective device!\nResidual (MSE) %f, using %d valid points\n", this->getName ().c_str (), residual_sqr / double (indices.size()), indices.size ());
     return;

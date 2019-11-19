@@ -46,6 +46,7 @@
 #include <pcl/io/openni_camera/openni_device.h>
 #include <pcl/io/openni_camera/openni_depth_image.h>
 #include <pcl/io/openni_camera/openni_ir_image.h>
+#include <pcl/io/openni_camera/openni_image.h>
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -388,15 +389,15 @@ void openni_wrapper::OpenNIDevice::InitShiftToDepthConversion ()
     const double dPlanePixelSize = shift_conversion_parameters_.zero_plane_pixel_size_ * shift_conversion_parameters_.pixel_size_factor_;
     const double dPlaneDsr = shift_conversion_parameters_.zero_plane_distance_;
     const double dPlaneDcl = shift_conversion_parameters_.emitter_dcmos_distace_;
-    const pcl::int32_t nConstShift = (shift_conversion_parameters_.param_coeff_ *
+    const std::int32_t nConstShift = (shift_conversion_parameters_.param_coeff_ *
                                       shift_conversion_parameters_.const_shift_) /
                                       shift_conversion_parameters_.pixel_size_factor_;
 
     shift_to_depth_table_.resize(shift_conversion_parameters_.device_max_shift_+1);
 
-    for (pcl::uint32_t nIndex = 1; nIndex < shift_conversion_parameters_.device_max_shift_; nIndex++)
+    for (std::uint32_t nIndex = 1; nIndex < shift_conversion_parameters_.device_max_shift_; nIndex++)
     {
-      pcl::int32_t nShiftValue = (pcl::int32_t)nIndex;
+      std::int32_t nShiftValue = (std::int32_t)nIndex;
 
       double dFixedRefX = (double) (nShiftValue - nConstShift) /
                           (double) shift_conversion_parameters_.param_coeff_;
@@ -409,7 +410,7 @@ void openni_wrapper::OpenNIDevice::InitShiftToDepthConversion ()
       if ((dDepth > shift_conversion_parameters_.min_depth_) &&
           (dDepth < shift_conversion_parameters_.max_depth_))
       {
-        shift_to_depth_table_[nIndex] = (pcl::uint16_t)(dDepth);
+        shift_to_depth_table_[nIndex] = (std::uint16_t)(dDepth);
       }
     }
 
@@ -766,8 +767,7 @@ openni_wrapper::OpenNIDevice::isSynchronized () const throw ()
     xn::ImageGenerator& image_generator = const_cast<xn::ImageGenerator&>(image_generator_);
     return (depth_generator.GetFrameSyncCap ().CanFrameSyncWith (image_generator) && depth_generator.GetFrameSyncCap ().IsFrameSyncedWith (image_generator));
   }
-  else
-    return (false);
+  return (false);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -839,7 +839,7 @@ openni_wrapper::OpenNIDevice::ImageDataThreadFunction ()
     image_data->CopyFrom (image_md);
     image_lock.unlock ();
     
-    boost::shared_ptr<Image> image = getCurrentImage (image_data);
+    auto image = getCurrentImage (image_data);
     for (const auto &callback : image_callback_)
     {
       callback.second.operator()(image);
@@ -868,7 +868,7 @@ openni_wrapper::OpenNIDevice::DepthDataThreadFunction ()
     depth_data->CopyFrom (depth_md);
     depth_lock.unlock ();
 
-    boost::shared_ptr<DepthImage> depth_image ( new DepthImage (depth_data, baseline_, getDepthFocalLength (), shadow_value_, no_sample_value_) );
+    DepthImage::Ptr depth_image ( new DepthImage (depth_data, baseline_, getDepthFocalLength (), shadow_value_, no_sample_value_) );
 
     for (const auto &callback : depth_callback_)
     {
@@ -898,7 +898,7 @@ openni_wrapper::OpenNIDevice::IRDataThreadFunction ()
     ir_data->CopyFrom (ir_md);
     ir_lock.unlock ();
 
-    boost::shared_ptr<IRImage> ir_image ( new IRImage (ir_data) );
+    IRImage::Ptr ir_image ( new IRImage (ir_data) );
 
     for (const auto &callback : ir_callback_)
     {
@@ -935,7 +935,7 @@ openni_wrapper::OpenNIDevice::NewIRDataAvailable (xn::ProductionNode&, void* coo
 openni_wrapper::OpenNIDevice::CallbackHandle 
 openni_wrapper::OpenNIDevice::registerImageCallback (const ImageCallbackFunction& callback, void* custom_data) throw ()
 {
-  image_callback_[image_callback_handle_counter_] = boost::bind (callback, _1, custom_data);
+  image_callback_[image_callback_handle_counter_] = [=] (const Image::Ptr& img) { callback (img, custom_data); };
   return (image_callback_handle_counter_++);
 }
 
@@ -950,7 +950,7 @@ openni_wrapper::OpenNIDevice::unregisterImageCallback (const OpenNIDevice::Callb
 openni_wrapper::OpenNIDevice::CallbackHandle 
 openni_wrapper::OpenNIDevice::registerDepthCallback (const DepthImageCallbackFunction& callback, void* custom_data) throw ()
 {
-  depth_callback_[depth_callback_handle_counter_] = boost::bind (callback, _1, custom_data);
+  depth_callback_[depth_callback_handle_counter_] = [=] (const DepthImage::Ptr& img) { callback (img, custom_data); };
   return (depth_callback_handle_counter_++);
 }
 
@@ -965,7 +965,7 @@ openni_wrapper::OpenNIDevice::unregisterDepthCallback (const OpenNIDevice::Callb
 openni_wrapper::OpenNIDevice::CallbackHandle 
 openni_wrapper::OpenNIDevice::registerIRCallback (const IRImageCallbackFunction& callback, void* custom_data) throw ()
 {
-  ir_callback_[ir_callback_handle_counter_] = boost::bind (callback, _1, custom_data);
+  ir_callback_[ir_callback_handle_counter_] = [=] (const IRImage::Ptr& img) { callback (img, custom_data); };
   return (ir_callback_handle_counter_++);
 }
 
@@ -1079,27 +1079,24 @@ openni_wrapper::OpenNIDevice::findCompatibleImageMode (const XnMapOutputMode& ou
     mode = output_mode;
     return (true);
   }
-  else
+  bool found = false;
+  for (const auto &available_image_mode : available_image_modes_)
   {
-    bool found = false;
-    for (const auto &available_image_mode : available_image_modes_)
+    if (available_image_mode.nFPS == output_mode.nFPS && isImageResizeSupported (available_image_mode.nXRes, available_image_mode.nYRes, output_mode.nXRes, output_mode.nYRes))
     {
-      if (available_image_mode.nFPS == output_mode.nFPS && isImageResizeSupported (available_image_mode.nXRes, available_image_mode.nYRes, output_mode.nXRes, output_mode.nYRes))
-      {
-        if (found)
-        { // check whether the new mode is better -> smaller than the current one.
-          if (mode.nXRes * mode.nYRes > available_image_mode.nXRes * available_image_mode.nYRes )
-            mode = available_image_mode;
-        }
-        else
-        {
+      if (found)
+      { // check whether the new mode is better -> smaller than the current one.
+        if (mode.nXRes * mode.nYRes > available_image_mode.nXRes * available_image_mode.nYRes )
           mode = available_image_mode;
-          found = true;
-        }
+      }
+      else
+      {
+        mode = available_image_mode;
+        found = true;
       }
     }
-    return (found);
   }
+  return (found);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1111,27 +1108,24 @@ openni_wrapper::OpenNIDevice::findCompatibleDepthMode (const XnMapOutputMode& ou
     mode = output_mode;
     return (true);
   }
-  else
+  bool found = false;
+  for (const auto &available_depth_mode : available_depth_modes_)
   {
-    bool found = false;
-    for (const auto &available_depth_mode : available_depth_modes_)
+    if (available_depth_mode.nFPS == output_mode.nFPS && isImageResizeSupported (available_depth_mode.nXRes, available_depth_mode.nYRes, output_mode.nXRes, output_mode.nYRes))
     {
-      if (available_depth_mode.nFPS == output_mode.nFPS && isImageResizeSupported (available_depth_mode.nXRes, available_depth_mode.nYRes, output_mode.nXRes, output_mode.nYRes))
-      {
-        if (found)
-        { // check whether the new mode is better -> smaller than the current one.
-          if (mode.nXRes * mode.nYRes > available_depth_mode.nXRes * available_depth_mode.nYRes )
-            mode = available_depth_mode;
-        }
-        else
-        {
+      if (found)
+      { // check whether the new mode is better -> smaller than the current one.
+        if (mode.nXRes * mode.nYRes > available_depth_mode.nXRes * available_depth_mode.nYRes )
           mode = available_depth_mode;
-          found = true;
-        }
+      }
+      else
+      {
+        mode = available_depth_mode;
+        found = true;
       }
     }
-    return (found);
   }
+  return (found);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////

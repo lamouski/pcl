@@ -40,13 +40,16 @@
 
 #pragma once
 
-#include "pcl/pcl_config.h"
+#include <pcl/pcl_config.h>
 #include <pcl/io/grabber.h>
 #include <pcl/io/file_grabber.h>
 #include <pcl/common/time_trigger.h>
+#include <pcl/conversions.h>
+
+#include <boost/shared_ptr.hpp>
+
 #include <string>
 #include <vector>
-#include <pcl/conversions.h>
 
 namespace pcl
 {
@@ -142,11 +145,11 @@ namespace pcl
 
     /** \brief Get the depth filename at a particular index */
     std::string
-    getDepthFileNameAtIndex (size_t idx) const;
+    getDepthFileNameAtIndex (std::size_t idx) const;
 
     /** \brief Query only the timestamp of an index, if it exists */
     bool
-    getTimestampAtIndex (size_t idx, pcl::uint64_t &timestamp) const;
+    getTimestampAtIndex (std::size_t idx, std::uint64_t &timestamp) const;
 
     /** \brief Manually set RGB image files.
      * \param[in] rgb_image_files A vector of [tiff/png/jpg/ppm] files to use as input. There must be a 1-to-1 correspondence between these and the depth images you set
@@ -191,12 +194,12 @@ namespace pcl
     protected:
     /** \brief Convenience function to see how many frames this consists of
       */
-    size_t
+    std::size_t
     numFrames () const;
     
     /** \brief Gets the cloud in ROS form at location idx */
     bool
-    getCloudAt (size_t idx, pcl::PCLPointCloud2 &blob, Eigen::Vector4f &origin, Eigen::Quaternionf &orientation) const;
+    getCloudAt (std::size_t idx, pcl::PCLPointCloud2 &blob, Eigen::Vector4f &origin, Eigen::Quaternionf &orientation) const;
 
 
     private:
@@ -214,6 +217,8 @@ namespace pcl
   template <typename PointT> class ImageGrabber : public ImageGrabberBase, public FileGrabber<PointT>
   {
     public:
+    using Ptr = boost::shared_ptr<ImageGrabber>;
+
     ImageGrabber (const std::string& dir, 
                   float frames_per_second = 0, 
                   bool repeat = false, 
@@ -232,11 +237,11 @@ namespace pcl
     ~ImageGrabber () throw () {}
     
     // Inherited from FileGrabber
-    const boost::shared_ptr< const pcl::PointCloud<PointT> >
-    operator[] (size_t idx) const override;
+    const typename pcl::PointCloud<PointT>::ConstPtr
+    operator[] (std::size_t idx) const override;
 
     // Inherited from FileGrabber
-    size_t
+    std::size_t
     size () const override;
 
     protected:
@@ -244,7 +249,7 @@ namespace pcl
     publish (const pcl::PCLPointCloud2& blob,
              const Eigen::Vector4f& origin, 
              const Eigen::Quaternionf& orientation) const override;
-    boost::signals2::signal<void (const boost::shared_ptr<const pcl::PointCloud<PointT> >&)>* signal_;
+    boost::signals2::signal<void (const typename pcl::PointCloud<PointT>::ConstPtr&)>* signal_;
   };
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -255,7 +260,7 @@ namespace pcl
                                       bool pclzf_mode)
     : ImageGrabberBase (dir, frames_per_second, repeat, pclzf_mode)
   {
-    signal_ = createSignal<void (const boost::shared_ptr<const pcl::PointCloud<PointT> >&)>();
+    signal_ = createSignal<void (const typename pcl::PointCloud<PointT>::ConstPtr&)>();
   }
   
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -266,7 +271,7 @@ namespace pcl
                                       bool repeat)
     : ImageGrabberBase (depth_dir, rgb_dir, frames_per_second, repeat)
   {
-    signal_ = createSignal<void (const boost::shared_ptr<const pcl::PointCloud<PointT> >&)>();
+    signal_ = createSignal<void (const typename pcl::PointCloud<PointT>::ConstPtr&)>();
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -276,12 +281,12 @@ namespace pcl
                                       bool repeat)
     : ImageGrabberBase (depth_image_files, frames_per_second, repeat), signal_ ()
   {
-    signal_ = createSignal<void (const boost::shared_ptr<const pcl::PointCloud<PointT> >&)>();
+    signal_ = createSignal<void (const typename pcl::PointCloud<PointT>::ConstPtr&)>();
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  template<typename PointT> const boost::shared_ptr< const pcl::PointCloud<PointT> >
-  ImageGrabber<PointT>::operator[] (size_t idx) const
+  template<typename PointT> const typename pcl::PointCloud<PointT>::ConstPtr
+  ImageGrabber<PointT>::operator[] (std::size_t idx) const
   {
     pcl::PCLPointCloud2 blob;
     Eigen::Vector4f origin;
@@ -295,7 +300,7 @@ namespace pcl
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  template <typename PointT> size_t
+  template <typename PointT> std::size_t
   ImageGrabber<PointT>::size () const
   {
     return (numFrames ());

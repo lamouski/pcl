@@ -92,15 +92,14 @@ printHelp (int, char **argv)
 void
 printDeviceList ()
 {
-  typedef boost::shared_ptr<pcl::DepthSenseGrabber> DepthSenseGrabberPtr;
-  std::vector<DepthSenseGrabberPtr> grabbers;
+  std::vector<DepthSenseGrabber::Ptr> grabbers;
   std::cout << "Connected devices: ";
   boost::format fmt ("\n  #%i  %s");
   while (true)
   {
     try
     {
-      grabbers.push_back (DepthSenseGrabberPtr (new pcl::DepthSenseGrabber));
+      grabbers.push_back (DepthSenseGrabber::Ptr (new pcl::DepthSenseGrabber));
       std::cout << boost::str (fmt % grabbers.size () % grabbers.back ()->getDeviceSerialNumber ());
     }
     catch (pcl::io::IOException& e)
@@ -120,7 +119,7 @@ class DepthSenseViewer
 
   public:
 
-    typedef pcl::PointCloud<PointT> PointCloudT;
+    using PointCloudT = pcl::PointCloud<PointT>;
 
     DepthSenseViewer (pcl::DepthSenseGrabber& grabber)
     : grabber_ (grabber)
@@ -140,7 +139,10 @@ class DepthSenseViewer
     void
     run ()
     {
-      boost::function<void (const typename PointCloudT::ConstPtr&)> f = boost::bind (&DepthSenseViewer::cloudCallback, this, _1);
+      std::function<void (const typename PointCloudT::ConstPtr&)> f = [this] (const typename PointCloudT::ConstPtr& cloud)
+      {
+        cloudCallback (cloud);
+      };
       connection_ = grabber_.registerCallback (f);
       grabber_.start ();
       while (!viewer_.wasStopped ())
@@ -251,7 +253,7 @@ class DepthSenseViewer
       // Temporal filter settings
       std::string tfs = boost::str (boost::format (", window size %i") % window_);
       entries.push_back (boost::format ("temporal filtering: %s%s") % TF[temporal_filtering_] % (temporal_filtering_ == pcl::DepthSenseGrabber::DepthSense_None ? "" : tfs));
-      for (size_t i = 0; i < entries.size (); ++i)
+      for (std::size_t i = 0; i < entries.size (); ++i)
       {
         std::string name = boost::str (name_fmt % i);
         std::string entry = boost::str (entries[i]);

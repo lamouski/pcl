@@ -36,9 +36,8 @@
 #include "pcl/io/io_exception.h"
 
 #include <boost/shared_ptr.hpp>
-#include <boost/cstdint.hpp>
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
+#include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -63,22 +62,23 @@ namespace pcl
   {
     namespace openni2
     {
-      typedef pcl::io::DepthImage DepthImage;
-      typedef pcl::io::IRImage IRImage;
-      typedef pcl::io::Image Image;
+      using DepthImage = pcl::io::DepthImage;
+      using IRImage = pcl::io::IRImage;
+      using Image = pcl::io::Image;
 
       class OpenNI2FrameListener;
 
       class PCL_EXPORTS OpenNI2Device
       {
         public:
+          using Ptr = boost::shared_ptr<OpenNI2Device>;
 
-          typedef boost::function<void(boost::shared_ptr<Image>, void* cookie) > ImageCallbackFunction;
-          typedef boost::function<void(boost::shared_ptr<DepthImage>, void* cookie) > DepthImageCallbackFunction;
-          typedef boost::function<void(boost::shared_ptr<IRImage>, void* cookie) > IRImageCallbackFunction;
-          typedef unsigned CallbackHandle;
+          using ImageCallbackFunction = std::function<void(Image::Ptr, void* cookie) >;
+          using DepthImageCallbackFunction = std::function<void(DepthImage::Ptr, void* cookie) >;
+          using IRImageCallbackFunction = std::function<void(IRImage::Ptr, void* cookie) >;
+          using CallbackHandle = unsigned;
 
-          typedef boost::function<void(openni::VideoStream& stream)> StreamCallbackFunction;
+          using StreamCallbackFunction = std::function<void(openni::VideoStream& stream)>;
 
           OpenNI2Device (const std::string& device_URI);
           virtual ~OpenNI2Device ();
@@ -89,9 +89,9 @@ namespace pcl
           getVendor () const;
           const std::string
           getName () const;
-          uint16_t
+          std::uint16_t
           getUsbVendorId () const;
-          uint16_t
+          std::uint16_t
           getUsbProductId () const;
 
           const std::string
@@ -192,7 +192,7 @@ namespace pcl
           getBaseline();
 
           // Value of pixels in shadow or that have no valid measurement
-          uint64_t
+          std::uint64_t
           getShadowValue();
 
           void
@@ -289,11 +289,11 @@ namespace pcl
 
 
           bool
-          findCompatibleVideoMode (const std::vector<OpenNI2VideoMode> supportedModes,
+          findCompatibleVideoMode (const std::vector<OpenNI2VideoMode>& supportedModes,
             const OpenNI2VideoMode& output_mode, OpenNI2VideoMode& mode) const;
 
           bool
-          resizingSupported (size_t input_width, size_t input_height, size_t output_width, size_t output_height) const;
+          resizingSupported (std::size_t input_width, std::size_t input_height, std::size_t output_width, std::size_t output_height) const;
 
           // Members
 
@@ -319,9 +319,9 @@ namespace pcl
           /** \brief distance between the projector and the IR camera in meters*/
           float baseline_;
           /** the value for shadow (occluded pixels) */
-          uint64_t shadow_value_;
+          std::uint64_t shadow_value_;
           /** the value for pixels without a valid disparity measurement */
-          uint64_t no_sample_value_;
+          std::uint64_t no_sample_value_;
       };
 
       PCL_EXPORTS std::ostream& operator<< (std::ostream& stream, const OpenNI2Device& device);

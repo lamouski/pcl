@@ -61,8 +61,8 @@ namespace pcl
   class OURCVFHEstimation : public FeatureFromNormals<PointInT, PointNT, PointOutT>
   {
     public:
-      typedef boost::shared_ptr<OURCVFHEstimation<PointInT, PointNT, PointOutT> > Ptr;
-      typedef boost::shared_ptr<const OURCVFHEstimation<PointInT, PointNT, PointOutT> > ConstPtr;
+      using Ptr = boost::shared_ptr<OURCVFHEstimation<PointInT, PointNT, PointOutT> >;
+      using ConstPtr = boost::shared_ptr<const OURCVFHEstimation<PointInT, PointNT, PointOutT> >;
       using Feature<PointInT, PointOutT>::feature_name_;
       using Feature<PointInT, PointOutT>::getClassName;
       using Feature<PointInT, PointOutT>::indices_;
@@ -71,9 +71,9 @@ namespace pcl
       using Feature<PointInT, PointOutT>::surface_;
       using FeatureFromNormals<PointInT, PointNT, PointOutT>::normals_;
 
-      typedef typename Feature<PointInT, PointOutT>::PointCloudOut PointCloudOut;
-      typedef typename pcl::search::Search<PointNormal>::Ptr KdTreePtr;
-      typedef typename pcl::PointCloud<PointInT>::Ptr PointInTPtr;
+      using PointCloudOut = typename Feature<PointInT, PointOutT>::PointCloudOut;
+      using KdTreePtr = typename pcl::search::Search<PointNormal>::Ptr;
+      using PointInTPtr = typename pcl::PointCloud<PointInT>::Ptr;
       /** \brief Empty constructor. */
       OURCVFHEstimation () :
         vpx_ (0), vpy_ (0), vpz_ (0), leaf_size_ (0.005f), normalize_bins_ (false), curv_threshold_ (0.03f), cluster_tolerance_ (leaf_size_ * 3),
@@ -192,7 +192,7 @@ namespace pcl
       inline void
       getCentroidClusters (std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f> > & centroids)
       {
-        for (size_t i = 0; i < centroids_dominant_orientations_.size (); ++i)
+        for (std::size_t i = 0; i < centroids_dominant_orientations_.size (); ++i)
           centroids.push_back (centroids_dominant_orientations_[i]);
       }
 
@@ -202,7 +202,7 @@ namespace pcl
       inline void
       getCentroidNormalClusters (std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f> > & centroids)
       {
-        for (size_t i = 0; i < dominant_normals_.size (); ++i)
+        for (std::size_t i = 0; i < dominant_normals_.size (); ++i)
           centroids.push_back (dominant_normals_[i]);
       }
 
@@ -238,7 +238,7 @@ namespace pcl
        * \param[in] min the minimum amount of points to be set
        */
       inline void
-      setMinPoints (size_t min)
+      setMinPoints (std::size_t min)
       {
         min_points_ = min;
       }
@@ -348,7 +348,7 @@ namespace pcl
       /** \brief Minimum amount of points in a clustered region to be considered stable for CVFH
        * computation.
        */
-      size_t min_points_;
+      std::size_t min_points_;
 
       /** \brief Radius for the normals computation. */
       float radius_normals_;

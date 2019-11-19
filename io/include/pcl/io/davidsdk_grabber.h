@@ -67,26 +67,20 @@ namespace pcl
   {
     public:
       /** @cond */
-      typedef boost::shared_ptr<DavidSDKGrabber> Ptr;
-      typedef boost::shared_ptr<const DavidSDKGrabber> ConstPtr;
+      using Ptr = boost::shared_ptr<DavidSDKGrabber>;
+      using ConstPtr = boost::shared_ptr<const DavidSDKGrabber>;
 
       // Define callback signature typedefs
-      typedef void
-      (sig_cb_davidsdk_point_cloud) (const pcl::PointCloud<pcl::PointXYZ>::Ptr &);
+      using sig_cb_davidsdk_point_cloud = void(const pcl::PointCloud<pcl::PointXYZ>::Ptr &);
 
-      typedef void
-      (sig_cb_davidsdk_mesh) (const pcl::PolygonMesh::Ptr &);
+      using sig_cb_davidsdk_mesh = void(const pcl::PolygonMesh::Ptr &);
 
-      typedef void
-      (sig_cb_davidsdk_image) (const boost::shared_ptr<pcl::PCLImage> &);
+      using sig_cb_davidsdk_image = void(const pcl::PCLImage::Ptr &);
 
-      typedef void
-      (sig_cb_davidsdk_point_cloud_image) (const pcl::PointCloud<pcl::PointXYZ>::Ptr &,
-                                           const boost::shared_ptr<pcl::PCLImage> &);
+      using sig_cb_davidsdk_point_cloud_image = void(const pcl::PointCloud<pcl::PointXYZ>::Ptr &, const pcl::PCLImage::Ptr &);
 
-      typedef void
-      (sig_cb_davidsdk_mesh_image) (const pcl::PolygonMesh::Ptr &,
-                                    const boost::shared_ptr<pcl::PCLImage> &);
+      using sig_cb_davidsdk_mesh_image = void(const pcl::PolygonMesh::Ptr &, const pcl::PCLImage::Ptr &);
+
       /** @endcond */
 
       /** @brief Constructor */
@@ -102,7 +96,7 @@ namespace pcl
        * @return Server info*/
       david::ServerInfo
       connect (const std::string & address = "127.0.0.1",
-               uint16_t port = david::DAVID_SDK_DefaultPort);
+               std::uint16_t port = david::DAVID_SDK_DefaultPort);
 
       /** @brief [Disconnect](http://docs.david-3d.com/sdk/en/classdavid_1_1_client_json_rpc.html#a2770728a6de2c708df767bedf8be0814) client
        * @param[in] stop_server */

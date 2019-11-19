@@ -88,7 +88,7 @@ pcl::BOARDLocalReferenceFrameEstimation<PointInT, PointNT, PointOutT>::getAngleB
 {
   Eigen::Vector3f angle_orientation;
   angle_orientation = v1.cross (v2);
-  float angle_radians = acosf (std::max (-1.0f, std::min (1.0f, v1.dot (v2))));
+  float angle_radians = std::acos (std::max (-1.0f, std::min (1.0f, v1.dot (v2))));
 
   angle_radians = angle_orientation.dot (axis) < 0.f ? (2 * static_cast<float> (M_PI) - angle_radians) : angle_radians;
 
@@ -545,10 +545,7 @@ pcl::BOARDLocalReferenceFrameEstimation<PointInT, PointNT, PointOutT>::computePo
       {
         break;
       }
-      else
-      {
-        ch = hole_end - 1;
-      }
+      ch = hole_end - 1;
     }
   }
 
@@ -605,7 +602,7 @@ pcl::BOARDLocalReferenceFrameEstimation<PointInT, PointNT, PointOutT>::computeFe
   }
 
   this->resetData ();
-  for (size_t point_idx = 0; point_idx < indices_->size (); ++point_idx)
+  for (std::size_t point_idx = 0; point_idx < indices_->size (); ++point_idx)
   {
     Eigen::Matrix3f currentLrf;
     PointOutT &rf = output[point_idx];

@@ -21,10 +21,6 @@ pcl::cloud_composer::ToolBoxModel::ToolBoxModel (const ToolBoxModel&)
 {
 }
 
-pcl::cloud_composer::ToolBoxModel::~ToolBoxModel ()
-{
-}
-
 void
 pcl::cloud_composer::ToolBoxModel::addTool (ToolFactory* tool_factory)
 {
@@ -52,7 +48,7 @@ pcl::cloud_composer::ToolBoxModel::setSelectionModel (QItemSelectionModel* selec
 }
   
 QStandardItem*
-pcl::cloud_composer::ToolBoxModel::addToolGroup (QString tool_group_name)
+pcl::cloud_composer::ToolBoxModel::addToolGroup (const QString& tool_group_name)
 {
   QList <QStandardItem*> matches_name = findItems (tool_group_name);
   if (matches_name.empty ())
@@ -64,7 +60,7 @@ pcl::cloud_composer::ToolBoxModel::addToolGroup (QString tool_group_name)
 
     return new_group_item;
   }
-  else if (matches_name.size () > 1)
+  if (matches_name.size () > 1)
   {
     qWarning () << "Multiple tool groups with same name in ToolBoxModel!!";
   }

@@ -39,11 +39,14 @@
 
 #pragma once
 
+#include <pcl/pcl_macros.h>
 #include <pcl/io/boost.h>
 #include <pcl/io/file_io.h>
 #include <pcl/io/ply/ply_parser.h>
 #include <pcl/PolygonMesh.h>
+
 #include <sstream>
+#include <tuple>
 
 namespace pcl
 {
@@ -283,7 +286,7 @@ namespace pcl
         * \param[in] element_name element name
         * \param[in] count number of instances
         */
-      boost::tuple<boost::function<void ()>, boost::function<void ()> > 
+      std::tuple<std::function<void ()>, std::function<void ()> > 
       elementDefinitionCallback (const std::string& element_name, std::size_t count);
       
       bool
@@ -293,7 +296,7 @@ namespace pcl
         * \param[in] element_name element name to which the property belongs
         * \param[in] property_name property name
         */
-      template <typename ScalarType> boost::function<void (ScalarType)> 
+      template <typename ScalarType> std::function<void (ScalarType)> 
       scalarPropertyDefinitionCallback (const std::string& element_name, const std::string& property_name);
 
       /** \brief function called when a list property is parsed
@@ -301,7 +304,7 @@ namespace pcl
         * \param[in] property_name list property name
         */
       template <typename SizeType, typename ScalarType>
-      boost::tuple<boost::function<void (SizeType)>, boost::function<void (ScalarType)>, boost::function<void ()> >
+      std::tuple<std::function<void (SizeType)>, std::function<void (ScalarType)>, std::function<void ()> >
       listPropertyDefinitionCallback (const std::string& element_name, const std::string& property_name);
       
       /** \brief function called at the beginning of a list property parsing.
@@ -440,7 +443,7 @@ namespace pcl
         * list property.
         */
       template<typename Scalar> void
-      appendScalarProperty (const std::string& name, const size_t& count = 1);
+      appendScalarProperty (const std::string& name, const std::size_t& count = 1);
 
       /** Amend property from cloud fields identified by \a old_name renaming
         * it \a new_name.
@@ -448,7 +451,7 @@ namespace pcl
         * param[in] new_name property new name
         */
       void
-      amendProperty (const std::string& old_name, const std::string& new_name, uint8_t datatype = 0);
+      amendProperty (const std::string& old_name, const std::string& new_name, std::uint8_t datatype = 0);
 
       /** Callback function for the begin of vertex line */
       void
@@ -518,22 +521,22 @@ namespace pcl
 
       //vertex element artifacts
       pcl::PCLPointCloud2 *cloud_;
-      size_t vertex_count_;
+      std::size_t vertex_count_;
       int vertex_offset_before_;
       //range element artifacts
       std::vector<std::vector <int> > *range_grid_;
-      size_t rgb_offset_before_;
+      std::size_t rgb_offset_before_;
       bool do_resize_;
       //face element artifact
       std::vector<pcl::Vertices> *polygons_;
     public:
-      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+      PCL_MAKE_ALIGNED_OPERATOR_NEW
       
     private:
       // RGB values stored by vertexColorCallback()
-      int32_t r_, g_, b_;
+      std::int32_t r_, g_, b_;
       // Color values stored by vertexAlphaCallback()
-      uint32_t a_, rgba_;
+      std::uint32_t a_, rgba_;
   };
 
   /** \brief Point Cloud Data (PLY) file format writer.
@@ -633,8 +636,7 @@ namespace pcl
       {
         if (binary)
           return (this->writeBinary (file_name, cloud, origin, orientation, true));
-        else
-          return (this->writeASCII (file_name, cloud, origin, orientation, 8, true));
+        return (this->writeASCII (file_name, cloud, origin, orientation, 8, true));
       }
 
       /** \brief Save point cloud data to a PLY file containing n-D points
@@ -656,8 +658,7 @@ namespace pcl
       {
         if (binary)
           return (this->writeBinary (file_name, cloud, origin, orientation, use_camera));
-        else
-          return (this->writeASCII (file_name, cloud, origin, orientation, 8, use_camera));
+        return (this->writeASCII (file_name, cloud, origin, orientation, 8, use_camera));
       }
 
       /** \brief Save point cloud data to a PLY file containing n-D points

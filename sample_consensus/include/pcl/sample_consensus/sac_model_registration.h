@@ -40,6 +40,7 @@
 
 #pragma once
 
+#include <pcl/pcl_macros.h>
 #include <pcl/sample_consensus/eigen.h>
 #include <pcl/sample_consensus/sac_model.h>
 #include <pcl/sample_consensus/model_types.h>
@@ -63,11 +64,11 @@ namespace pcl
       using SampleConsensusModel<PointT>::error_sqr_dists_;
       using SampleConsensusModel<PointT>::isModelValid;
 
-      typedef typename SampleConsensusModel<PointT>::PointCloud PointCloud;
-      typedef typename SampleConsensusModel<PointT>::PointCloudPtr PointCloudPtr;
-      typedef typename SampleConsensusModel<PointT>::PointCloudConstPtr PointCloudConstPtr;
+      using PointCloud = typename SampleConsensusModel<PointT>::PointCloud;
+      using PointCloudPtr = typename SampleConsensusModel<PointT>::PointCloudPtr;
+      using PointCloudConstPtr = typename SampleConsensusModel<PointT>::PointCloudConstPtr;
 
-      typedef boost::shared_ptr<SampleConsensusModelRegistration> Ptr;
+      using Ptr = boost::shared_ptr<SampleConsensusModelRegistration<PointT> >;
 
       /** \brief Constructor for base SampleConsensusModelRegistration.
         * \param[in] cloud the input point cloud dataset
@@ -209,7 +210,7 @@ namespace pcl
         return (false);
       }
 
-      /** \brief Return an unique id for this model (SACMODEL_REGISTRATION). */
+      /** \brief Return a unique id for this model (SACMODEL_REGISTRATION). */
       inline pcl::SacModel
       getModelType () const override { return (SACMODEL_REGISTRATION); }
 
@@ -305,7 +306,7 @@ namespace pcl
       {
         if (!indices_tgt_ || !indices_ || indices_->empty () || indices_->size () != indices_tgt_->size ())
           return;
-        for (size_t i = 0; i < indices_->size (); ++i)
+        for (std::size_t i = 0; i < indices_->size (); ++i)
           correspondences_[(*indices_)[i]] = (*indices_tgt_)[i];
       }
 
@@ -321,7 +322,7 @@ namespace pcl
       /** \brief Internal distance threshold used for the sample selection step. */
       double sample_dist_thresh_;
     public:
-      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+      PCL_MAKE_ALIGNED_OPERATOR_NEW
   };
 }
 

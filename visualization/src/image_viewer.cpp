@@ -127,10 +127,11 @@ pcl::visualization::ImageViewer::~ImageViewer ()
 void
 pcl::visualization::ImageViewer::addRGBImage (
     const unsigned char* rgb_data, unsigned width, unsigned height,
-    const std::string &layer_id, double opacity)
+    const std::string &layer_id, double opacity, bool autoresize)
 {
-  if (unsigned (getSize ()[0]) != width ||
-      unsigned (getSize ()[1]) != height)
+  if (autoresize &&
+      (unsigned (getSize ()[0]) != width ||
+      unsigned (getSize ()[1]) != height))
     setSize (width, height);
 
   // Check to see if this ID entry already exists (has it been already added to the visualizer?)
@@ -388,7 +389,7 @@ pcl::visualization::ImageViewer::spinOnce (int time, bool force_redraw)
 //////////////////////////////////////////////////////////////////////////////////////////
 boost::signals2::connection
 pcl::visualization::ImageViewer::registerMouseCallback (
-    boost::function<void (const pcl::visualization::MouseEvent&)> callback)
+    std::function<void (const pcl::visualization::MouseEvent&)> callback)
 {
   // just add observer at first time when a callback is registered
   if (mouse_signal_.empty ())
@@ -409,7 +410,7 @@ pcl::visualization::ImageViewer::registerMouseCallback (
 //////////////////////////////////////////////////////////////////////////////////////////
 boost::signals2::connection
 pcl::visualization::ImageViewer::registerKeyboardCallback (
-    boost::function<void (const pcl::visualization::KeyboardEvent&)> callback)
+    std::function<void (const pcl::visualization::KeyboardEvent&)> callback)
 {
   // just add observer at first time when a callback is registered
   if (keyboard_signal_.empty ())
@@ -793,7 +794,7 @@ pcl::visualization::ImageViewer::addText (unsigned int x, unsigned int y, const 
 //////////////////////////////////////////////////////////////////////////////////////////
 void
 pcl::visualization::ImageViewer::markPoint (
-    size_t u, size_t v, Vector3ub fg_color, Vector3ub bg_color, double radius,
+    std::size_t u, std::size_t v, Vector3ub fg_color, Vector3ub bg_color, double radius,
     const std::string &layer_id, double opacity)
 {
   // Check to see if this ID entry already exists (has it been already added to the visualizer?)

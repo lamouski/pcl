@@ -98,8 +98,7 @@ printHelp (int, char **argv)
 void
 printDeviceList ()
 {
-  typedef boost::shared_ptr<pcl::RealSenseGrabber> RealSenseGrabberPtr;
-  std::vector<RealSenseGrabberPtr> grabbers;
+  std::vector<RealSenseGrabber::Ptr> grabbers;
   std::cout << "Connected devices: ";
   boost::format fmt ("\n  #%i  %s");
   boost::format fmt_dm ("\n        %2i) %d Hz  %dx%d Depth");
@@ -108,12 +107,12 @@ printDeviceList ()
   {
     try
     {
-      grabbers.push_back (RealSenseGrabberPtr (new pcl::RealSenseGrabber));
+      grabbers.push_back (RealSenseGrabber::Ptr (new pcl::RealSenseGrabber));
       std::cout << boost::str (fmt % grabbers.size () % grabbers.back ()->getDeviceSerialNumber ());
       std::vector<pcl::RealSenseGrabber::Mode> xyz_modes = grabbers.back ()->getAvailableModes (true);
       std::cout << "\n      Depth modes:";
       if (xyz_modes.size ())
-        for (size_t i = 0; i < xyz_modes.size (); ++i)
+        for (std::size_t i = 0; i < xyz_modes.size (); ++i)
           std::cout << boost::str (fmt_dm % (i + 1) % xyz_modes[i].fps % xyz_modes[i].depth_width % xyz_modes[i].depth_height);
       else
       {
@@ -122,7 +121,7 @@ printDeviceList ()
       std::vector<pcl::RealSenseGrabber::Mode> xyzrgba_modes = grabbers.back ()->getAvailableModes (false);
       std::cout << "\n      Depth + color modes:";
       if (xyz_modes.size ())
-        for (size_t i = 0; i < xyzrgba_modes.size (); ++i)
+        for (std::size_t i = 0; i < xyzrgba_modes.size (); ++i)
         {
           const pcl::RealSenseGrabber::Mode& m = xyzrgba_modes[i];
           std::cout << boost::str (fmt_dcm % (i + xyz_modes.size () + 1) % m.fps % m.depth_width % m.depth_height % m.color_width % m.color_height);
@@ -147,7 +146,7 @@ class RealSenseViewer
 
   public:
 
-    typedef pcl::PointCloud<PointT> PointCloudT;
+    using PointCloudT = pcl::PointCloud<PointT>;
 
     RealSenseViewer (pcl::RealSenseGrabber& grabber)
     : grabber_ (grabber)
@@ -170,7 +169,7 @@ class RealSenseViewer
     void
     run ()
     {
-      boost::function<void (const typename PointCloudT::ConstPtr&)> f = boost::bind (&RealSenseViewer::cloudCallback, this, _1);
+      std::function<void (const typename PointCloudT::ConstPtr&)> f = [this] (const typename PointCloudT::ConstPtr& cloud) { cloudCallback (cloud); };
       connection_ = grabber_.registerCallback (f);
       grabber_.start ();
       printMode (grabber_.getMode ());
@@ -297,7 +296,7 @@ class RealSenseViewer
       // Temporal filter settings
       std::string tfs = boost::str (boost::format (", window size %i") % window_);
       entries.push_back (boost::format ("temporal filtering: %s%s") % TF[temporal_filtering_] % (temporal_filtering_ == pcl::RealSenseGrabber::RealSense_None ? "" : tfs));
-      for (size_t i = 0; i < entries.size (); ++i)
+      for (std::size_t i = 0; i < entries.size (); ++i)
       {
         std::string name = boost::str (name_fmt % i);
         std::string entry = boost::str (entries[i]);

@@ -12,12 +12,15 @@
 #                                   www.pointclouds.org
 #------------------------------------------------------------------------------------
 
+# Set default policy behavior similar to minimum requirement version
+cmake_policy(VERSION 3.5)
+
+# explicitly set policies we already support in newer cmake versions
 if(POLICY CMP0074)
   # TODO: update *_ROOT variables to be PCL_*_ROOT or equivalent.
   # CMP0074 directly affects how Find* modules work and *_ROOT variables.  Since
   # this is a config file that will be consumed by parent projects with (likely)
   # NEW behavior, we need to push a policy stack.
-  cmake_policy(PUSH)
   cmake_policy(SET CMP0074 NEW)
 endif()
 
@@ -35,9 +38,6 @@ macro(pcl_report_not_found _reason)
     message(FATAL_ERROR ${_reason})
   elseif(NOT PCL_FIND_QUIETLY)
     message(WARNING ${_reason})
-  endif()
-  if(POLICY CMP0074)
-    cmake_policy(POP)
   endif()
   return()
 endmacro()
@@ -101,7 +101,7 @@ macro(find_boost)
   endif()
   set(Boost_ADDITIONAL_VERSIONS
     "@Boost_MAJOR_VERSION@.@Boost_MINOR_VERSION@.@Boost_SUBMINOR_VERSION@" "@Boost_MAJOR_VERSION@.@Boost_MINOR_VERSION@"
-    "1.70.0" "1.70"
+    "1.71.0" "1.71" "1.70.0" "1.70"
     "1.69.0" "1.69" "1.68.0" "1.68" "1.67.0" "1.67" "1.66.0" "1.66" "1.65.1" "1.65.0" "1.65"
     "1.64.0" "1.64" "1.63.0" "1.63" "1.62.0" "1.62" "1.61.0" "1.61" "1.60.0" "1.60"
     "1.59.0" "1.59" "1.58.0" "1.58" "1.57.0" "1.57" "1.56.0" "1.56" "1.55.0" "1.55")
@@ -217,12 +217,22 @@ macro(find_rssdk)
   find_package(RSSDK)
 endmacro()
 
+macro(find_rssdk2)
+  if(PCL_ALL_IN_ONE_INSTALLER)
+    set(realsense2_DIR "${PCL_ROOT}/3rdParty/librealsense2/lib/cmake/realsense2" CACHE PATH "The directory containing realsense2Config.cmake")
+  elseif(NOT realsense2_DIR)
+    get_filename_component(realsense2_DIR "@REALSENSE2_INCLUDE_DIRS@" PATH)
+    set(realsense2_DIR "${realsense2_DIR}/lib/cmake/realsense2" CACHE PATH "The directory containing realsense2Config.cmake")
+  endif()
+  find_package(RSSDK2)
+endmacro()
+
 #remove this as soon as flann is shipped with FindFlann.cmake
 macro(find_flann)
   if(PCL_ALL_IN_ONE_INSTALLER)
     set(FLANN_ROOT "${PCL_ROOT}/3rdParty/Flann")
   elseif(NOT FLANN_ROOT)
-    get_filename_component(FLANN_ROOT "@FLANN_INCLUDE_DIRS@" PATH)
+    set(FLANN_ROOT "@FLANN_ROOT@")
   endif()
 
   set(FLANN_USE_STATIC @FLANN_USE_STATIC@)
@@ -240,7 +250,7 @@ macro(find_VTK)
     set(VTK_DIR "@VTK_DIR@" CACHE PATH "The directory containing VTKConfig.cmake")
   endif()
   if(NOT ANDROID)
-    find_package(VTK ${QUIET_})
+    find_package(VTK ${QUIET_} COMPONENTS ${PCL_VTK_COMPONENTS})
   endif()
 endmacro()
 
@@ -296,6 +306,8 @@ macro(find_external_library _component _lib _is_optional)
     find_dssdk()
   elseif("${_lib}" STREQUAL "rssdk")
     find_rssdk()
+  elseif("${_lib}" STREQUAL "rssdk2")
+    find_rssdk2()
   elseif("${_lib}" STREQUAL "vtk")
     find_VTK()
   elseif("${_lib}" STREQUAL "libusb-1.0")
@@ -435,6 +447,9 @@ list(LENGTH pcl_all_components PCL_NB_COMPONENTS)
 
 @PCLCONFIG_OPTIONAL_DEPENDENCIES@
 
+# VTK components required by PCL
+set(PCL_VTK_COMPONENTS "@PCL_VTK_COMPONENTS@")
+
 set(pcl_header_only_components 2d cuda_common geometry gpu_tracking modeler in_hand_scanner point_cloud_editor cloud_composer)
 
 include(FindPackageHandleStandardArgs)
@@ -468,9 +483,6 @@ set(PCL_TO_FIND_COMPONENTS ${_PCL_TO_FIND_COMPONENTS})
 unset(_PCL_TO_FIND_COMPONENTS)
 
 if(NOT PCL_TO_FIND_COMPONENTS)
-  if(POLICY CMP0074)
-    cmake_policy(POP)
-  endif()
   return()
 endif()
 
@@ -616,7 +628,7 @@ foreach(component ${PCL_TO_FIND_COMPONENTS})
             INTERFACE_INCLUDE_DIRECTORIES "${PCL_${COMPONENT}_INCLUDE_DIRS}"
             INTERFACE_LINK_LIBRARIES "${PCL_${COMPONENT}_LINK_LIBRARIES}"
         )
-      else()
+      elseif(CMAKE_VERSION VERSION_LESS 3.11)
         set_target_properties(${pcl_component}
           PROPERTIES
             INTERFACE_COMPILE_DEFINITIONS "${definitions}"
@@ -625,6 +637,17 @@ foreach(component ${PCL_TO_FIND_COMPONENTS})
             INTERFACE_INCLUDE_DIRECTORIES "${PCL_${COMPONENT}_INCLUDE_DIRS}"
             INTERFACE_LINK_LIBRARIES "${PCL_${COMPONENT}_LINK_LIBRARIES}"
         )
+      else()
+        set_target_properties(${pcl_component}
+          PROPERTIES
+            INTERFACE_COMPILE_DEFINITIONS "${definitions}"
+            INTERFACE_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:CXX>:${PCL_COMPILE_OPTIONS}>"
+            INTERFACE_INCLUDE_DIRECTORIES "${PCL_${COMPONENT}_INCLUDE_DIRS}"
+        )
+        # If possible, we use target_link_libraries to avoid problems with link-type keywords,
+        # see https://github.com/PointCloudLibrary/pcl/issues/2989
+        # target_link_libraries on imported libraries is supported only since CMake 3.11
+        target_link_libraries(${pcl_component} INTERFACE ${PCL_${COMPONENT}_LINK_LIBRARIES})
       endif()
       set(PCL_${COMPONENT}_LIBRARIES ${pcl_component})
     endif()
@@ -646,14 +669,10 @@ endif()
 pcl_remove_duplicate_libraries(PCL_COMPONENTS PCL_LIBRARIES)
 
 # Add 3rd party libraries, as user code might include our .HPP implementations
-list(APPEND PCL_LIBRARIES ${BOOST_LIBRARIES} ${QHULL_LIBRARIES} ${OPENNI_LIBRARIES} ${OPENNI2_LIBRARIES} ${ENSENSO_LIBRARIES} ${davidSDK_LIBRARIES} ${DSSDK_LIBRARIES} ${RSSDK_LIBRARIES} ${VTK_LIBRARIES})
+list(APPEND PCL_LIBRARIES ${BOOST_LIBRARIES} ${QHULL_LIBRARIES} ${OPENNI_LIBRARIES} ${OPENNI2_LIBRARIES} ${ENSENSO_LIBRARIES} ${davidSDK_LIBRARIES} ${DSSDK_LIBRARIES} ${RSSDK_LIBRARIES} ${RSSDK2_LIBRARIES} ${VTK_LIBRARIES})
 if (TARGET FLANN::FLANN)
   list(APPEND PCL_LIBRARIES FLANN::FLANN)
 endif()
 
 find_package_handle_standard_args(PCL DEFAULT_MSG PCL_LIBRARIES PCL_INCLUDE_DIRS)
 mark_as_advanced(PCL_LIBRARIES PCL_INCLUDE_DIRS PCL_LIBRARY_DIRS)
-
-if(POLICY CMP0074)
-  cmake_policy(POP)
-endif()

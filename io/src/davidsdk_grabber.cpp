@@ -89,7 +89,7 @@ pcl::DavidSDKGrabber::~DavidSDKGrabber () throw ()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 david::ServerInfo
 pcl::DavidSDKGrabber::connect (const std::string &address,
-                               uint16_t port)
+                               std::uint16_t port)
 {
   david::ServerInfo server_info;
 
@@ -371,7 +371,7 @@ pcl::DavidSDKGrabber::processGrabbing ()
       {
         pcl::PolygonMesh::Ptr mesh;
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
-        boost::shared_ptr<pcl::PCLImage> image;
+        pcl::PCLImage::Ptr image;
 
         fps_mutex_.lock ();
         frequency_.event ();
@@ -383,8 +383,8 @@ pcl::DavidSDKGrabber::processGrabbing ()
           image.reset (new pcl::PCLImage);
           int width, height;
           david_.sls ().GetLiveImage (image->data, width, height);
-          image->width = (uint32_t) width;
-          image->height = (uint32_t) height;
+          image->width = (std::uint32_t) width;
+          image->height = (std::uint32_t) height;
           image->encoding = "CV_8UC1";
         }
 

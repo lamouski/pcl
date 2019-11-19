@@ -35,13 +35,14 @@
  *
  */
 
-#include <pcl/pcl_config.h>
 #include <pcl/io/low_level_io.h>
 #include <pcl/io/pcd_grabber.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/tar.h>
+#include <pcl/pcl_config.h>
+#include <pcl/pcl_macros.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////// GrabberImplementation //////////////////////
@@ -63,13 +64,13 @@ struct pcl::PCDGrabberBase::PCDGrabberImpl
 
   //! Get cloud at a particular location
   bool
-  getCloudAt (size_t idx, 
+  getCloudAt (std::size_t idx, 
               pcl::PCLPointCloud2 &blob,
               Eigen::Vector4f &origin, 
               Eigen::Quaternionf &orientation);
 
   //! Returns the size
-  size_t
+  std::size_t
   numFrames ();
 
   pcl::PCDGrabberBase& grabber_;
@@ -95,13 +96,13 @@ struct pcl::PCDGrabberBase::PCDGrabberImpl
   // True if we have already found the location of all clouds (for tar only)
   bool scraped_;
   std::vector<int> tar_offsets_;
-  std::vector<size_t> cloud_idx_to_file_idx_;
+  std::vector<std::size_t> cloud_idx_to_file_idx_;
 
   // Mutex to ensure that two quick consecutive triggers do not cause
   // simultaneous asynchronous read-aheads
   std::mutex read_ahead_mutex_;
 
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW 
+  PCL_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -110,7 +111,7 @@ pcl::PCDGrabberBase::PCDGrabberImpl::PCDGrabberImpl (pcl::PCDGrabberBase& grabbe
   , frames_per_second_ (frames_per_second)
   , repeat_ (repeat)
   , running_ (false)
-  , time_trigger_ (1.0 / static_cast<double> (std::max (frames_per_second, 0.001f)), boost::bind (&PCDGrabberImpl::trigger, this))
+  , time_trigger_ (1.0 / static_cast<double> (std::max (frames_per_second, 0.001f)), [this] { trigger (); })
   , valid_ (false)
   , tar_fd_ (-1)
   , tar_offset_ (0)
@@ -129,7 +130,7 @@ pcl::PCDGrabberBase::PCDGrabberImpl::PCDGrabberImpl (pcl::PCDGrabberBase& grabbe
   , frames_per_second_ (frames_per_second)
   , repeat_ (repeat)
   , running_ (false)
-  , time_trigger_ (1.0 / static_cast<double> (std::max (frames_per_second, 0.001f)), boost::bind (&PCDGrabberImpl::trigger, this))
+  , time_trigger_ (1.0 / static_cast<double> (std::max (frames_per_second, 0.001f)), [this] { trigger (); })
   , valid_ (false)
   , tar_fd_ (-1)
   , tar_offset_ (0)
@@ -291,7 +292,7 @@ pcl::PCDGrabberBase::PCDGrabberImpl::scrapeForClouds (bool force)
   // Go through and index the clouds
   PCDReader reader;
   pcl::PCLPointCloud2 blob;
-  for (size_t i = 0; i < pcd_files_.size (); ++i)
+  for (std::size_t i = 0; i < pcd_files_.size (); ++i)
   {
     std::string pcd_file = pcd_files_[i];
     // Try to read the file header (TODO this is a huge waste just to make sure it's PCD...is extension enough?)
@@ -328,7 +329,7 @@ pcl::PCDGrabberBase::PCDGrabberImpl::scrapeForClouds (bool force)
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 bool 
-pcl::PCDGrabberBase::PCDGrabberImpl::getCloudAt (size_t idx, 
+pcl::PCDGrabberBase::PCDGrabberImpl::getCloudAt (std::size_t idx, 
                                                  pcl::PCLPointCloud2 &blob,
                                                  Eigen::Vector4f &origin, 
                                                  Eigen::Quaternionf &orientation)
@@ -444,7 +445,7 @@ pcl::PCDGrabberBase::isRepeatOn () const
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 bool
-pcl::PCDGrabberBase::getCloudAt (size_t idx, 
+pcl::PCDGrabberBase::getCloudAt (std::size_t idx, 
                                  pcl::PCLPointCloud2 &blob,
                                  Eigen::Vector4f &origin, 
                                  Eigen::Quaternionf &orientation) const

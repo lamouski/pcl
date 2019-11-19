@@ -56,6 +56,7 @@
 #include <pcl/io/png_io.h>
 #include <boost/filesystem.hpp>
 
+#include <functional>
 #include <iostream>
 
 namespace pc = pcl::console;
@@ -66,7 +67,7 @@ using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vector<string> getPcdFilesInDir(const string& directory)
+std::vector<string> getPcdFilesInDir(const string& directory)
 {
   namespace fs = boost::filesystem;
   fs::path dir(directory);
@@ -74,7 +75,7 @@ vector<string> getPcdFilesInDir(const string& directory)
   if (!fs::exists(dir) || !fs::is_directory(dir))
     PCL_THROW_EXCEPTION(pcl::IOException, "Wrong PCD directory");
     
-  vector<string> result;
+  std::vector<string> result;
   fs::directory_iterator pos(dir);
   fs::directory_iterator end;           
 
@@ -98,7 +99,7 @@ struct SampledScopeTime : public StopWatch
     time_ms_ += getTime ();    
     if (i_ % EACH == 0 && i_)
     {
-      cout << "[~SampledScopeTime] : Average frame time = " << time_ms_ / EACH << "ms ( " << 1000.f * EACH / time_ms_ << "fps )" << endl;
+      std::cout << "[~SampledScopeTime] : Average frame time = " << time_ms_ / EACH << "ms ( " << 1000.f * EACH / time_ms_ << "fps )" << std::endl;
       time_ms_ = 0;        
     }
     ++i_;
@@ -136,7 +137,7 @@ savePNGFile (const std::string& filename, const pcl::PointCloud<T>& cloud)
 class PeoplePCDApp
 {
   public:
-    typedef pcl::gpu::people::PeopleDetector PeopleDetector;
+    using PeopleDetector = pcl::gpu::people::PeopleDetector;
 
     enum { COLS = 640, ROWS = 480 };
 
@@ -256,7 +257,7 @@ class PeoplePCDApp
         rgba_host_.points.resize(w * h);
         rgba_host_.width = w;
         rgba_host_.height = h;
-        for(size_t i = 0; i < rgba_host_.size(); ++i)
+        for(std::size_t i = 0; i < rgba_host_.size(); ++i)
         {
           const unsigned char *pixel = &rgb_host_[i * 3];
           RGB& rgba = rgba_host_.points[i];         
@@ -278,11 +279,14 @@ class PeoplePCDApp
       if (ispcd)
         cloud_cb_= true;
         
-      typedef boost::shared_ptr<openni_wrapper::DepthImage> DepthImagePtr;
-      typedef boost::shared_ptr<openni_wrapper::Image> ImagePtr;
-      
-      boost::function<void (const boost::shared_ptr<const PointCloud<PointXYZRGBA> >&)> func1 = boost::bind (&PeoplePCDApp::source_cb1, this, _1);
-      boost::function<void (const ImagePtr&, const DepthImagePtr&, float constant)> func2 = boost::bind (&PeoplePCDApp::source_cb2, this, _1, _2, _3);                  
+      using DepthImagePtr = boost::shared_ptr<openni_wrapper::DepthImage>;
+      using ImagePtr = boost::shared_ptr<openni_wrapper::Image>;
+
+      std::function<void (const PointCloud<PointXYZRGBA>::ConstPtr&)> func1 = [this] (const PointCloud<PointXYZRGBA>::ConstPtr& cloud) { source_cb1 (cloud); };
+      std::function<void (const ImagePtr&, const DepthImagePtr&, float)> func2 = [this] (const ImagePtr& img, const DepthImagePtr& depth, float constant)
+      {
+        source_cb2 (img, depth, constant);
+      };
       boost::signals2::connection c = cloud_cb_ ? capture_.registerCallback (func1) : capture_.registerCallback (func2);
 
       {
@@ -293,7 +297,7 @@ class PeoplePCDApp
           capture_.start ();
           while (!exit_ && !final_view_.wasStopped())
           {                                    
-            bool has_data = data_ready_cond_.timed_wait(lock, boost::posix_time::millisec(100));
+            bool has_data = (data_ready_cond_.wait_for(lock, 100ms) == std::cv_status::no_timeout);
             if(has_data)
             {                   
               SampledScopeTime fps(time_ms_);
@@ -311,8 +315,8 @@ class PeoplePCDApp
           }
           final_view_.spinOnce (3);                  
         }
-        catch (const std::bad_alloc& /*e*/) { cout << "Bad alloc" << endl; }
-        catch (const std::exception& /*e*/) { cout << "Exception" << endl; }
+        catch (const std::bad_alloc& /*e*/) { std::cout << "Bad alloc" << std::endl; }
+        catch (const std::exception& /*e*/) { std::cout << "Exception" << std::endl; }
 
         capture_.stop ();
       }
@@ -351,19 +355,19 @@ class PeoplePCDApp
 
 void print_help()
 {
-  cout << "\nPeople tracking app options (help):" << endl;
-  cout << "\t -numTrees    \t<int> \tnumber of trees to load" << endl;
-  cout << "\t -tree0       \t<path_to_tree_file>" << endl;
-  cout << "\t -tree1       \t<path_to_tree_file>" << endl;
-  cout << "\t -tree2       \t<path_to_tree_file>" << endl;
-  cout << "\t -tree3       \t<path_to_tree_file>" << endl;
-  cout << "\t -gpu         \t<GPU_device_id>" << endl;
-  cout << "\t -w           \t<bool> \tWrite results to disk" << endl;
-  cout << "\t -h           \tPrint this help" << endl;
-  cout << "\t -dev         \t<Kinect_device_id>" << endl;  
-  cout << "\t -pcd         \t<path_to_pcd_file>" << endl;
-  cout << "\t -oni         \t<path_to_oni_file>" << endl;  
-  cout << "\t -pcd_folder  \t<path_to_folder_with_pcd_files>" << endl;
+  std::cout << "\nPeople tracking app options (help):" << std::endl;
+  std::cout << "\t -numTrees    \t<int> \tnumber of trees to load" << std::endl;
+  std::cout << "\t -tree0       \t<path_to_tree_file>" << std::endl;
+  std::cout << "\t -tree1       \t<path_to_tree_file>" << std::endl;
+  std::cout << "\t -tree2       \t<path_to_tree_file>" << std::endl;
+  std::cout << "\t -tree3       \t<path_to_tree_file>" << std::endl;
+  std::cout << "\t -gpu         \t<GPU_device_id>" << std::endl;
+  std::cout << "\t -w           \t<bool> \tWrite results to disk" << std::endl;
+  std::cout << "\t -h           \tPrint this help" << std::endl;
+  std::cout << "\t -dev         \t<Kinect_device_id>" << std::endl;  
+  std::cout << "\t -pcd         \t<path_to_pcd_file>" << std::endl;
+  std::cout << "\t -oni         \t<path_to_oni_file>" << std::endl;  
+  std::cout << "\t -pcd_folder  \t<path_to_folder_with_pcd_files>" << std::endl;
 }
 
 int main(int argc, char** argv)
@@ -405,7 +409,7 @@ int main(int argc, char** argv)
     else
     if (pc::parse_argument (argc, argv, "-pcd_folder", pcd_folder) > 0)
     {         
-      vector<string> pcd_files = getPcdFilesInDir(pcd_folder);       
+      std::vector<string> pcd_files = getPcdFilesInDir(pcd_folder);       
       capture.reset( new pcl::PCDGrabber<PointXYZRGBA>(pcd_files, 30, true) );
     }    
     else
@@ -419,10 +423,10 @@ int main(int argc, char** argv)
       //capture.reset( new pcl::PCDGrabber<PointXYZRGBA>(pcd_files, 30, true) );      
     }
   }
-  catch (const pcl::PCLException& /*e*/) { return cout << "Can't open depth source" << endl, -1; }
+  catch (const pcl::PCLException& /*e*/) { return std::cout << "Can't open depth source" << std::endl, -1; }
     
   //selecting tree files
-  vector<string> tree_files;
+  std::vector<string> tree_files;
   tree_files.emplace_back("Data/forest1/tree_20.txt");
   tree_files.emplace_back("Data/forest2/tree_20.txt");
   tree_files.emplace_back("Data/forest3/tree_20.txt");
@@ -447,7 +451,7 @@ int main(int argc, char** argv)
   try
   {
     // loading trees
-    typedef pcl::gpu::people::RDFBodyPartsDetector RDFBodyPartsDetector;
+    using RDFBodyPartsDetector = pcl::gpu::people::RDFBodyPartsDetector;
     RDFBodyPartsDetector::Ptr rdf(new RDFBodyPartsDetector(tree_files));
     PCL_VERBOSE("[Main] : Loaded files into rdf");
 
@@ -458,10 +462,10 @@ int main(int argc, char** argv)
     // executing
     app.startMainLoop ();
   }
-  catch (const pcl::PCLException& e) { cout << "PCLException: " << e.detailedMessage() << endl; print_help();}
-  catch (const std::runtime_error& e) { cout << e.what() << endl; print_help(); }
-  catch (const std::bad_alloc& /*e*/) { cout << "Bad alloc" << endl; print_help(); }
-  catch (const std::exception& /*e*/) { cout << "Exception" << endl; print_help(); }
+  catch (const pcl::PCLException& e) { std::cout << "PCLException: " << e.detailedMessage() << std::endl; print_help();}
+  catch (const std::runtime_error& e) { std::cout << e.what() << std::endl; print_help(); }
+  catch (const std::bad_alloc& /*e*/) { std::cout << "Bad alloc" << std::endl; print_help(); }
+  catch (const std::exception& /*e*/) { std::cout << "Exception" << std::endl; print_help(); }
 
   return 0;
 }  

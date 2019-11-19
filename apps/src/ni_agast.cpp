@@ -59,16 +59,16 @@ using namespace pcl;
 using namespace std;
 using namespace std::chrono_literals;
 
-typedef PointUV KeyPointT;
+using KeyPointT = PointUV;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT>
 class AGASTDemo
 {
   public:
-    typedef PointCloud<PointT> Cloud;
-    typedef typename Cloud::Ptr CloudPtr;
-    typedef typename Cloud::ConstPtr CloudConstPtr;
+    using Cloud = PointCloud<PointT>;
+    using CloudPtr = typename Cloud::Ptr;
+    using CloudConstPtr = typename Cloud::ConstPtr;
 
     AGASTDemo (Grabber& grabber)
       : cloud_viewer_ ("AGAST 2D Keypoints -- PointCloud")
@@ -193,8 +193,8 @@ class AGASTDemo
     void
     init ()
     {
-      boost::function<void (const CloudConstPtr&) > cloud_cb = boost::bind (&AGASTDemo::cloud_callback, this, _1);
-      cloud_connection = grabber_.registerCallback (cloud_cb);      
+      std::function<void (const CloudConstPtr&) > cloud_cb = [this] (const CloudConstPtr& cloud) { cloud_callback (cloud); };
+      cloud_connection = grabber_.registerCallback (cloud_cb);
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -220,8 +220,8 @@ class AGASTDemo
       keypoints3d.height = keypoints->height;
       keypoints3d.is_dense = true;
 
-      size_t j = 0;
-      for (size_t i = 0; i < keypoints->size (); ++i)
+      std::size_t j = 0;
+      for (std::size_t i = 0; i < keypoints->size (); ++i)
       {
         const PointT &pt = (*cloud)(static_cast<long unsigned int> (keypoints->points[i].u), 
                                     static_cast<long unsigned int> (keypoints->points[i].v));
@@ -296,7 +296,7 @@ class AGASTDemo
           if (keypoints && !keypoints->empty ())
           {
             image_viewer_.removeLayer (getStrBool (keypts));
-            for (size_t i = 0; i < keypoints->size (); ++i)
+            for (std::size_t i = 0; i < keypoints->size (); ++i)
             {
               int u = int (keypoints->points[i].u);
               int v = int (keypoints->points[i].v);

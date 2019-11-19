@@ -64,15 +64,15 @@ namespace pcl
   class OrganizedFastMesh : public MeshConstruction<PointInT>
   {
     public:
-      typedef boost::shared_ptr<OrganizedFastMesh<PointInT> > Ptr;
-      typedef boost::shared_ptr<const OrganizedFastMesh<PointInT> > ConstPtr;
+      using Ptr = boost::shared_ptr<OrganizedFastMesh<PointInT> >;
+      using ConstPtr = boost::shared_ptr<const OrganizedFastMesh<PointInT> >;
 
       using MeshConstruction<PointInT>::input_;
       using MeshConstruction<PointInT>::check_tree_;
 
-      typedef typename pcl::PointCloud<PointInT>::Ptr PointCloudPtr;
+      using PointCloudPtr = typename pcl::PointCloud<PointInT>::Ptr;
 
-      typedef std::vector<pcl::Vertices> Polygons;
+      using Polygons = std::vector<pcl::Vertices>;
 
       enum TriangulationType
       {
@@ -94,7 +94,7 @@ namespace pcl
       , triangulation_type_ (QUAD_MESH)
       , viewpoint_ (Eigen::Vector3f::Zero ())
       , store_shadowed_faces_ (false)
-      , cos_angle_tolerance_ (fabsf (cosf (pcl::deg2rad (12.5f))))
+      , cos_angle_tolerance_ (std::abs (std::cos (pcl::deg2rad (12.5f))))
       , distance_tolerance_ (-1.0f)
       , distance_dependent_ (false)
       , use_depth_as_distance_(false)
@@ -203,7 +203,7 @@ namespace pcl
       setAngleTolerance(float angle_tolerance)
       {
         if (angle_tolerance > 0)
-          cos_angle_tolerance_ = fabsf (cosf (angle_tolerance));
+          cos_angle_tolerance_ = std::abs (std::cos (angle_tolerance));
         else
           cos_angle_tolerance_ = -1.0f;
       }
